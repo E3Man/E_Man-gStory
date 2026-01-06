@@ -1,0 +1,1 @@
+include("entities/gsnpc_base/shared.lua")
