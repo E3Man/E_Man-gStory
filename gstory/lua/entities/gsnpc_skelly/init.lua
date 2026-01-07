@@ -24,7 +24,7 @@ ENT.FOV = 180
 
 ENT.MeleeAttackCooldown = 2
 
-ENT.AnimPacketSet = {
+ENT.AnimPacketSet = { -- How the entity will react to specific holdtypes or animation packets
     none = {
         ply = {
             [ ACT_IDLE ] = ACT_HL2MP_IDLE_ZOMBIE,
