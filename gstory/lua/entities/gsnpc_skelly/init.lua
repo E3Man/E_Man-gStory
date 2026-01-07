@@ -66,7 +66,7 @@ end
 
 Tasks[ "EnemyManagement" ] = {
     ["OnEntitySight"] = function(self, ent)
-        print(ent)
+     
         if not Factions.IsHostileTo(self, ent) then return end 
             gs_aimodule.AddEnemy( self, ent )
 
@@ -77,7 +77,7 @@ Tasks[ "EnemyManagement" ] = {
             gs_aimodule.ChooseEnemyByPriority( self )
     end,
     [ "OnEntitySightLost" ] = function( self, ent ) 
-        if not Factions.IsHostileTo(self, ent) then return end 
+        if not Factions.IsHostileTo(self, ent) or not self.RemoveEnemyOnLostSight then return end 
         gs_aimodule.RemoveEnemy(self, ent)
         if self.UsesEnemyMemory then 
         gs_aimodule.UpdateEnemyMemory(self, ent, ent:GetPos())
