@@ -22,6 +22,8 @@ ENT.SightDistance = 2000                 -- Maximum distance at which the NPC ca
 ENT.HearingDistance = 1000               -- Maximum distance at which the NPC can hear enemies
 ENT.FOV = 180       
 
+
+
 ENT.MeleeAttackCooldown = 2
 
 ENT.AnimPacketSet = { -- How the entity will react to specific holdtypes or animation packets
@@ -54,39 +56,32 @@ end
 
 --- TASKS --- 
 
-ENT.InitialTasks = { {name = "EnemyManagement"}, {name = "Skellie_EnemyHandler"} }
+ENT.InitialTasks = { {name = "EnemyManagement_Sight"}, {name = "Skellie_EnemyHandler"} }
 
-local function Sorter_Distance(self, ent1, ent2)
-    local selfPos = self:GetPos()
-    local dis1, dis2 = selfPos - ent1:GetPos(), selfPos - ent2:GetPos()
-    local dot1, dot2 = dis1:Dot( dis1 ), dis2:Dot(dis2)
 
-    return dot1 < dot2 
-end 
 
-Tasks[ "EnemyManagement" ] = {
+Tasks[ "EnemyManagement_Sight" ] = {
     ["OnEntitySight"] = function(self, ent)
      
         if not Factions.IsHostileTo(self, ent) then return end 
             gs_aimodule.AddEnemy( self, ent )
 
-            gs_aimodule.SortEnemiesByPriority(self, function(ent1, ent2)
-            return Sorter_Distance(self, ent1, ent2)
-            end )
+            gs_aimodule.SortEnemiesByPriority(self)
 
             gs_aimodule.ChooseEnemyByPriority( self )
     end,
     [ "OnEntitySightLost" ] = function( self, ent ) 
         if not Factions.IsHostileTo(self, ent) or not self.RemoveEnemyOnLostSight then return end 
+        local disp = self:GetPos() - ent:GetPos()
+        local dist = disp:Dot(disp)
+        if ENT.EnemyManagement_Sight_OLS_DURE^2 <= dist then return end 
         gs_aimodule.RemoveEnemy(self, ent)
         if self.UsesEnemyMemory then 
         gs_aimodule.UpdateEnemyMemory(self, ent, ent:GetPos())
         end 
     end,
     ["OnEnemyRemoved"] = function(self, ent)
-        gs_aimodule.SortEnemiesByPriority(self, function(ent1, ent2)
-            return Sorter_Distance(self, ent1, ent2)
-        end )
+        gs_aimodule.SortEnemiesByPriority(self)
         gs_aimodule.ChooseEnemyByPriority( self )  
     end,
 }

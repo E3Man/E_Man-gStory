@@ -403,7 +403,13 @@ function gs_aimodule.ChooseEnemyByPriority(self, attempt)
 end 
     
 function gs_aimodule.SortEnemiesByPriority( self, sortFunc )
-    if not ( IsValid(self) and self.Enemies and sortFunc ) then return end 
+    if not ( IsValid(self) and self.Enemies  ) then return end 
+
+    local sorters = gs_aimodule.EnemySorters
+
+    if isstring(sortFunc) or not sortFunc then 
+        sortFunc = sorters[sortFunc or self.EnemySorter] or sorters.Distance 
+    end 
 
     local enemies = self.Enemies 
 

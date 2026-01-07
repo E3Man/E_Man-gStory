@@ -37,6 +37,10 @@ ENT.UsesEnemyMemory = false
 
 ENT.MeleeAttackCooldown = 4
 
+ENT.EnemyManagement_Sight_OLS_RE = true -- On Sight Lost, Remove Enemy?
+ENT.EnemyManagement_Sight_OLS_DURE = 300 -- On Sight Lost, Distance Until Remove Enemy?
+
+ENT.EnemySorter = "Distance"
 
 --- TASK --- 
 ENT.InitialTasks = nil
