@@ -15,7 +15,7 @@ ENT.Weapon = nil            -- Weapon used by the NPC. Will also be put in its i
 ENT.Inventory = {}                 -- Additional weapons to put in the NPC's inventory
 
 --- BEHAVIOUR ---
-ENT.Faction = "FACTION_CORRUPTION"         -- Faction the NPC belongs to
+ENT.Faction = "FACTION_SKELETON"         -- Faction the NPC belongs to
 ENT.Attitude = D_HT                      -- Default attitude of the NPC towards other NPCs
 ENT.UseLineOfSight = true                -- Whether the NPC needs line of sight to detect enemies
 ENT.SightDistance = 2000                 -- Maximum distance at which the NPC can see enemies
