@@ -112,6 +112,8 @@ function ENT:MoveToPos( pos, options, generator )
 		return cost + generator(self, area, fromArea, ladder, elevator, length)
 		end 
 
+		
+
 		return cost
 	end 
 
@@ -128,6 +130,9 @@ function ENT:MoveToPos( pos, options, generator )
         if self.CoroutineInterrupted == true then return end 
 
 		path:Update( self )
+		if IsValid(options.facetoward) then 
+			self.loco:FaceTowards( options.facetoward:GetPos() )
+		end 
 
 		-- Draw the path (only visible on listen servers or single player)
 		if ( options.draw ) then

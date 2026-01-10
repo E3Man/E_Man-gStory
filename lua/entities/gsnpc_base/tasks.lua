@@ -97,3 +97,5 @@ function Task.RemoveTask(self, taskName, dontClearRunBehaviourFlag)
 
     Task.SortTasksByPriority(self)
 end
+
+include("entities/gsnpc_base/enemy_tasks.lua")

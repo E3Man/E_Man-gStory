@@ -3,7 +3,7 @@ AddCSLuaFile()
 local Task = gs_aimodule.Task 
 local Tasks = Task.Tasks 
 
-local Factions = gs_aimodule.Factions
+
 
 include("entities/gsnpc_skelly/shared.lua")
 
@@ -22,9 +22,9 @@ ENT.SightDistance = 2000                 -- Maximum distance at which the NPC ca
 ENT.HearingDistance = 1000               -- Maximum distance at which the NPC can hear enemies
 ENT.FOV = 180       
 
+ENT.InitialHealth = 10
 
-
-ENT.MeleeAttackCooldown = 2
+ENT.MeleeAttackCooldown = 0.8
 
 ENT.AnimPacketSet = { -- How the entity will react to specific holdtypes or animation packets
     none = {
@@ -56,35 +56,11 @@ end
 
 --- TASKS --- 
 
-ENT.InitialTasks = { {name = "EnemyManagement_Sight"}, {name = "Skellie_EnemyHandler"} }
+ENT.InitialTasks = { {name = "EnemyManagement_Sight"}, {name = "Skellie_EnemyHandler"}  }
 
 
 
-Tasks[ "EnemyManagement_Sight" ] = {
-    ["OnEntitySight"] = function(self, ent)
-     
-        if not Factions.IsHostileTo(self, ent) then return end 
-            gs_aimodule.AddEnemy( self, ent )
 
-            gs_aimodule.SortEnemiesByPriority(self)
-
-            gs_aimodule.ChooseEnemyByPriority( self )
-    end,
-    [ "OnEntitySightLost" ] = function( self, ent ) 
-        if not Factions.IsHostileTo(self, ent) or not self.RemoveEnemyOnLostSight then return end 
-        local disp = self:GetPos() - ent:GetPos()
-        local dist = disp:Dot(disp)
-        if ENT.EnemyManagement_Sight_OLS_DURE^2 <= dist then return end 
-        gs_aimodule.RemoveEnemy(self, ent)
-        if self.UsesEnemyMemory then 
-        gs_aimodule.UpdateEnemyMemory(self, ent, ent:GetPos())
-        end 
-    end,
-    ["OnEnemyRemoved"] = function(self, ent)
-        gs_aimodule.SortEnemiesByPriority(self)
-        gs_aimodule.ChooseEnemyByPriority( self )  
-    end,
-}
 
 Tasks[ "Skellie_ChaseEnemy" ] = {
     ["RunBehaviour"] = function(self)
@@ -98,7 +74,7 @@ Tasks[ "Skellie_ChaseEnemy" ] = {
     ["Think"] = function(self)
         if not IsValid(self.CurEnemy) then return end 
         local dist = self:GetPos():DistToSqr(self.CurEnemy:GetPos())
-        if dist < 40^2 then 
+        if dist < 70^2 then 
             gs_aimodule.PerformActionWithCooldown(self, "MeleeAttack", self.MeleeAttackCooldown, MeleeAttack, self.CurEnemy)
         end 
 
@@ -110,7 +86,7 @@ Tasks[ "Skellie_ChaseEnemy" ] = {
 
 Tasks[ "Skellie_Hunt" ] = {
     ["RunBehaviour"] = function(self)
-        print("hi")
+    
         local plys = player.GetAll()
         local trgt = plys[ math.random( #plys ) ]
         gs_aimodule.Movement.SetActivity(self, ACT_RUN, "ply")
@@ -141,14 +117,14 @@ function ENT:GSAI_Initialize()
     gs_aimodule.Movement.SetActivity( self, ACT_IDLE, true )
 
     self:SetSkin(2)
-    self:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+
 
     Task.AddTask(self, "Skellie_Hunt")
    
 end 
 
 function ENT:GSAI_Think()
-    print(self.CurEnemy)
+    
 end 
 
 function ENT:GSAI_OnKilled( dmginfo )

@@ -1,3 +1,7 @@
+gs_aimodule = gs_aimodule or {}
+
+include("autorun/sv_gstory_convars.lua")
+
 /*
 
 Hello, E_Man here!
@@ -21,4 +25,6 @@ This story mode will also have the players seeing themselves not as the heroes, 
 This is a love letter to the community. This was written in 17/12/2025. Thank you, gmodders!
 
 */
+
+
 

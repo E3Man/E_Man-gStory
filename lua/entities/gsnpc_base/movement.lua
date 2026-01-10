@@ -349,9 +349,14 @@ end
 local function ResolveAnimPacket( self, centralActivity, branch )
     local animPacketSet = self.AnimPacketSet or gStory_HoldTypeToAnim
     local curAnimPacket = self.CurAnimPacket or "none"
-    local animPacket = animPacketSet[ curAnimPacket ] 
+    local animPacket = animPacketSet[ curAnimPacket ] or gStory_HoldTypeToAnim[ curAnimPacket ]
 
     local anim = animPacket[ branch ][ centralActivity ] 
+
+    if isstring(anim) then 
+        self:LookupSequence(anim)
+        return 
+    end 
 
     if not anim then 
         local packetSetStr = tostring( animPacketSet or gStory_HoldTypeToAnim )
@@ -391,6 +396,10 @@ function Movement.SetActivity(self, centralActivity, isPlayer, packet)
     self:StartActivity( act )
 
 end
+
+function Movement.GetAnimPacket(holdtype)
+    return gStory_HoldTypeToAnim[ holdtype ]
+end 
 
 -- Apply hold-type-based packet for the entity. This now uses the registered packet system.
 function Movement.ApplyHoldTypeAnimPacket(self)
@@ -461,7 +470,7 @@ function Movement.AimAtVector( self, pos )
     self:SetPoseParameter("aim_pitch", diff.p)
 end 
 
-function Movement.AimAtVectorByDegree( self, pos )
+function Movement.AimAtVectorByDegree( self, pos, speed )
         
    -- if (not IsValid(self)) or (not IsValid(pos)) or (not speed) then  return end
 

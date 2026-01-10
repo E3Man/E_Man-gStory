@@ -5,6 +5,7 @@
 -- =====================================================
 
 gs_aimodule = {}
+gs_aimodule.nextbots = {}
 
 -- -------------------------
 -- Utilities
@@ -19,19 +20,33 @@ function gs_aimodule.ThrowError(err)
 end
 
 -- -------------------------
--- Task system (split to `tasks.lua`)
--- -------------------------
-include("entities/gsnpc_base/tasks.lua")
-
--- -------------------------
 -- Faction System (split to `factions.lua`)
 -- -------------------------
 include("entities/gsnpc_base/factions.lua")
 
 -- -------------------------
+-- Task system (split to `tasks.lua`)
+-- -------------------------
+include("entities/gsnpc_base/tasks.lua")
+
+
+
+
+-- -------------------------
 -- Movement / Animation packets (split to `movement.lua`)
 -- -------------------------
 include("entities/gsnpc_base/movement.lua")
+
+-- -------------------------
+-- Movement / Animation packets (split to `movement.lua`)
+-- -------------------------
+include("entities/gsnpc_base/enemy_sorters.lua")
+
+include("entities/gsnpc_base/attributes.lua")
+
+-- Include all NPC init.lua files 
+include("entities/gsnpc_skelly/init.lua")
+include("entities/gsnpc_ebot/init.lua")
 
 function gs_aimodule.RemoveAllRemoveCallbacks(self)
     if not IsValid(self) then return end
@@ -60,6 +75,9 @@ function gs_aimodule.InitializeAI(self)
     self:SetFOV(self.FOV)
     self:SetMaxVisionRange(self.SightDistance)
 
+    self:SetHealth(self.InitialHealth or self.InitialMaxHealth)
+    self:SetMaxHealth(self.InitialMaxHealth or self.InitialHealth)
+
     gs_aimodule.Movement.ApplyHoldTypeAnimPacket(self)
 
 
@@ -69,6 +87,8 @@ function gs_aimodule.InitializeAI(self)
 
     -- Register a cleanup callback so when this NPC is removed we also remove any callbacks we created on other entities
     gs_aimodule.AddRemoveCallback(self, self, "self_cleanup", gs_aimodule.RemoveAllRemoveCallbacks, self) 
+
+    table.insert( gs_aimodule.nextbots, self )
 
 end
 
@@ -89,8 +109,9 @@ function gs_aimodule.GiveWeapon(self, weaponClass)
     wep:Spawn()
     wep:Activate()
 
-    gs_aimodule.EquipWeapon(self, wep)
     gs_aimodule.RegisterWeaponInInv(self, wep)
+    gs_aimodule.EquipWeapon(self, wep)
+
 
     return wep
 end
@@ -98,7 +119,7 @@ end
 function gs_aimodule.EquipWeapon(self, wep)
     if not (IsValid(self) and wep) then return end 
 
-    if self.Weapon then
+    if self.Weapon and not isstring(self.Weapon) then
         gs_aimodule.UnequipWeapon(self)
     end
 
@@ -116,8 +137,8 @@ function gs_aimodule.EquipWeapon(self, wep)
     pcall(function() wep:OwnerChanged() end)
     pcall(function() wep:Equip(self) end)
 
-    gs_aimodule.ShowWeapon(wep)
-    gs_aimodule.HandWeapon(wep)
+    gs_aimodule.ShowWeapon(self, wep)
+    gs_aimodule.HandWeapon(self, wep)
 
     self.Weapon = wep
 
@@ -136,6 +157,8 @@ end
 
 function gs_aimodule.RegisterWeaponInInv(self, wep)
     if not (IsValid(self) and IsValid(wep)) then return end
+
+    wep:SetOwner(self)
 
     local inv = self.Inventory or {}
 
@@ -277,12 +300,15 @@ end
 function gs_aimodule.SetEnemy( self, ent )
     if not ( IsValid(self) ) then return end 
     
+    if IsValid(ent) then 
+    if GetConVar("gstory_ai_ignoreplayers"):GetBool() and ent:IsPlayer() then return end 
+    end 
+    
     -- If no entity provided, clear current enemy
     if not ( ent or IsValid(ent) ) then
         ent = self.CurEnemy
         if IsValid(ent) then
             -- Remove registered per-entity enemy callback
-            gs_aimodule.RemoveRemoveCallback(self, ent, "enemy")
             self.CurEnemy = nil 
             gs_aimodule.RemoveEnemy( self, ent )
         end
@@ -298,24 +324,6 @@ function gs_aimodule.SetEnemy( self, ent )
     self.CurEnemy = ent 
     gs_aimodule.AddEnemy( self, ent )
 
-    -- Register a per-enemy remove callback so that when the enemy entity is removed, we stop identifying that
-    -- non existent mf as an enemy
-
-    gs_aimodule.AddRemoveCallback(self, ent, "enemy", function(bot, removedEnt)
-        -- Ensure bot is valid
-        if not IsValid(bot) then return end
-
-        -- Call the hook to notify behaviour
-        if bot.OnEnemyRemoved then
-            pcall(function() bot:OnEnemyRemoved(removedEnt) end)
-        end
-
-        -- Remove enemy bookkeeping
-        gs_aimodule.RemoveEnemy(bot, removedEnt)
-
-        -- Remove stored callback entry even if the entity is already invalid
-        gs_aimodule.RemoveRemoveCallback(bot, removedEnt, "enemy")
-    end, self, ent)
 
     self:OnSetEnemy( self, ent )
 
@@ -331,6 +339,7 @@ function gs_aimodule.InterruptCoroutine(self)
 end 
 
 function gs_aimodule.AddEnemy( self, ent )
+    if GetConVar("gstory_ai_ignoreplayers"):GetBool() and ent:IsPlayer() then return end
     if not ( IsValid(self) and IsValid( ent ) ) then return end 
     self.Enemies = self.Enemies or {}
 
@@ -344,6 +353,10 @@ function gs_aimodule.AddEnemy( self, ent )
     if self.OnEnemyAdded then
         pcall(function() self:OnEnemyAdded(ent) end)
     end
+
+    gs_aimodule.AddRemoveCallback(self, ent, "EnemyRemoval", function()
+        gs_aimodule.RemoveEnemy(self, ent)
+    end )
 
 end 
 
@@ -371,11 +384,12 @@ function gs_aimodule.RemoveEnemy( self, ent )
 
         if removed == self.CurEnemy then 
             gs_aimodule.SetEnemy( self, nil )
+          
         end 
 
         -- Notify that an enemy was removed
         if self.OnEnemyRemoved then
-            pcall(function() self:OnEnemyRemoved(removed or ent) end)
+             self:OnEnemyRemoved(removed or ent) 
         end
     end
 
@@ -405,6 +419,8 @@ end
 function gs_aimodule.SortEnemiesByPriority( self, sortFunc )
     if not ( IsValid(self) and self.Enemies  ) then return end 
 
+    if #self.Enemies < 2 then return end 
+
     local sorters = gs_aimodule.EnemySorters
 
     if isstring(sortFunc) or not sortFunc then 
@@ -413,7 +429,9 @@ function gs_aimodule.SortEnemiesByPriority( self, sortFunc )
 
     local enemies = self.Enemies 
 
-    table.sort( enemies, sortFunc )
+    table.sort( enemies, function(ent1, ent2)
+        return sortFunc(self, ent1, ent2)
+    end )
 end 
 
 
@@ -494,3 +512,4 @@ function gs_aimodule.RemoveRemoveCallback(self, entOrIndex, id)
 
     return true
 end 
+

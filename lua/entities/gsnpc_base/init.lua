@@ -15,6 +15,10 @@ local Task = gs_aimodule.Task
 -- ATTRIBUTES
 */
 
+--- HEALTH ---
+ENT.InitialMaxHealth = 100
+ENT.InitialHealth = math.huge
+
 --- VISUALS --- 
 ENT.Model = "models/combine_soldier.mdl"  -- Model used by the NPC
 ENT.Bodygroup = {}                       -- Bodygroups to set on the model
@@ -43,7 +47,7 @@ ENT.EnemyManagement_Sight_OLS_DURE = 300 -- On Sight Lost, Distance Until Remove
 ENT.EnemySorter = "Distance"
 
 --- TASK --- 
-ENT.InitialTasks = nil
+ENT.InitialTasks = {{name = "EnemyManagement_Sight"}}
 
 /*--------------------------------------------------------------------
 -- CUSTOM HOOKS
@@ -106,7 +110,7 @@ Task.Tasks[ "task_sight" ] = {
 function ENT:Initialize()
 
     self:AddFlags(FL_OBJECT)
-   
+    self:SetCollisionGroup( COLLISION_GROUP_DEBRIS )
 
     gs_aimodule.InitializeAI( self )
     self:GSAI_Initialize()
@@ -133,11 +137,13 @@ end
 
 -- 1. SIGHT/SENSORY RELAY
 function ENT:OnEntitySight( ent )
+    if GetConVar("gstory_ai_ignoreplayers"):GetBool() and ent:IsPlayer() then return end 
     self:GSAI_OnEntitySight( ent )
     Task.CallHookFromTask( self, "OnEntitySight", ent )
 end
 
 function ENT:OnEntitySightLost( ent )
+
     self:GSAI_OnEntitySightLost( ent )
     Task.CallHookFromTask( self, "OnEntitySightLost", ent )
 end
@@ -170,6 +176,8 @@ end
 function ENT:RunBehaviour()
     while true do 
         Task.CallHookFromTask( self, "RunBehaviour" )
+     
+      
         coroutine.yield()
     end
 end 
@@ -213,7 +221,7 @@ function ENT:BodyUpdate()
     local vel = self.loco:GetVelocity()
     local velDot = vel:Dot( vel )
 
-    if velDot > 0.01 then 
+    if velDot > 0.00001 then 
         self:BodyMoveXY()
         return
     end
