@@ -326,17 +326,27 @@ gs_aimodule.AnimPackets = gStory_HoldTypeToAnim
 -- ENT.CurPacketSet  : table | The table containing all the entity's main animation packets
 
 -- Keep a local reference to the module object
-local Movement = gs_aimodule.Movement or {}
-gs_aimodule.Movement = Movement
+gs_aimodule.Movement = gs_aimodule.Movement or {}
+local Movement = gs_aimodule.Movement 
 
+Movement.Motion = {}
 
+Movement.Motion.Walk = {
+    speed = 20
+}
+
+Movement.Motion.Run = {
+    speed = 40
+}
 
 
 -- Apply motion stats to the locomotion object
 function Movement.ApplyMotionStats(self, statsData)
+    statsData = statsData or {}
+
     local maxSpeed = statsData.speed or 100
-    local acceleration = statsData.acceleration or 100
-    local deceleration = statsData.deceleration or 100
+    local acceleration = statsData.acceleration or 9999
+    local deceleration = statsData.deceleration or 9999
 
     local loco = self.loco
     if not loco then return end

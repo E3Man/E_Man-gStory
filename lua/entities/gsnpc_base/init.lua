@@ -28,7 +28,7 @@ ENT.Weapon = nil                -- Weapon used by the NPC. Will also be put in i
 ENT.Inventory = {}                 -- Additional weapons to put in the NPC's inventory
 
 --- BEHAVIOUR ---
-ENT.Faction = "FACTION_GMODDER"         -- Faction the NPC belongs to
+ENT.Faction = "FACTION_GMOD"         -- Faction the NPC belongs to
 ENT.Attitude = D_HT                      -- Default attitude of the NPC towards other NPCs
 ENT.UseLineOfSight = true                -- Whether the NPC needs line of sight to detect enemies
 ENT.SightDistance = 2000                 -- Maximum distance at which the NPC can see enemies
@@ -37,8 +37,11 @@ ENT.FOV = 90                               -- Field of view angle for sight dete
 
 ENT.UsesEnemyMemory = false 
 
+ENT.SortEnemies = true
 
-
+ENT.InitialMotionStats = {
+    speed = 400
+}
 ENT.MeleeAttackCooldown = 4
 
 ENT.EnemyManagement_Sight_OLS_RE = true -- On Sight Lost, Remove Enemy?
@@ -48,6 +51,9 @@ ENT.EnemySorter = "Distance"
 
 --- TASK --- 
 ENT.InitialTasks = {{name = "EnemyManagement_Sight"}}
+
+ENT.PreferredCombatTask = "TacticalAI_DogFight"
+ENT.PreferredIdleTask   = "TacticalAI_Idle"
 
 /*--------------------------------------------------------------------
 -- CUSTOM HOOKS
@@ -227,4 +233,11 @@ function ENT:BodyUpdate()
     end
 
 	self:FrameAdvance()
+end 
+
+function ENT:OnStuck()
+    local area = navmesh.GetNearestNavArea(self:GetPos())
+    local pos = area:GetCenter()
+
+    self:SetPos( pos )
 end 

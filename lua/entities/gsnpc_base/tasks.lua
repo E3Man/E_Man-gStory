@@ -9,6 +9,8 @@ local Task = gs_aimodule.Task
 
 Task.Tasks = Task.Tasks or {}
 
+include("entities/gsnpc_base/taskcontainer.lua")
+
 local function prioritySorting(x, y)
     return (x.Priority or 0) < (y.Priority or 0)
 end
@@ -97,5 +99,13 @@ function Task.RemoveTask(self, taskName, dontClearRunBehaviourFlag)
 
     Task.SortTasksByPriority(self)
 end
+
+function Task.RunPIdleTask(self)
+    Task.AddTask(self, self.PreferredIdleTask )
+end 
+
+function Task.RunPCombatTask(self)
+    Task.AddTask(self, self.PreferredCombatTask)
+end 
 
 include("entities/gsnpc_base/enemy_tasks.lua")

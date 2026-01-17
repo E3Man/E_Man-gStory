@@ -69,6 +69,8 @@ end
 function gs_aimodule.InitializeAI(self)
     if not self.Inventory then self.Inventory = {} end
 
+
+
     local mdl = self.Model
 
     self:SetModel(mdl)
@@ -78,11 +80,20 @@ function gs_aimodule.InitializeAI(self)
     self:SetHealth(self.InitialHealth or self.InitialMaxHealth)
     self:SetMaxHealth(self.InitialMaxHealth or self.InitialHealth)
 
+   self.loco:SetStepHeight(45)
+
+    gs_aimodule.Movement.ApplyMotionStats( self, self.InitialMotionStats )
+
     gs_aimodule.Movement.ApplyHoldTypeAnimPacket(self)
 
 
     if self.Weapon then
-        gs_aimodule.GiveWeapon(self, self.Weapon)    
+        if isstring(self.Weapon) then 
+            gs_aimodule.GiveWeapon(self, self.Weapon)    
+        elseif istable(self.Weapon) then 
+            local wep = self.Weapon[ math.random(#self.Weapon) ]
+            gs_aimodule.GiveWeapon(self, wep)
+        end 
     end
 
     -- Register a cleanup callback so when this NPC is removed we also remove any callbacks we created on other entities
@@ -297,7 +308,7 @@ end
 
 
 
-function gs_aimodule.SetEnemy( self, ent )
+function gs_aimodule.SetEnemy( self, ent, fromRemoveEnemy )
     if not ( IsValid(self) ) then return end 
     
     if IsValid(ent) then 
@@ -310,6 +321,7 @@ function gs_aimodule.SetEnemy( self, ent )
         if IsValid(ent) then
             -- Remove registered per-entity enemy callback
             self.CurEnemy = nil 
+            if fromRemoveEnemy then return end 
             gs_aimodule.RemoveEnemy( self, ent )
         end
         return 
@@ -366,24 +378,16 @@ function gs_aimodule.RemoveEnemy( self, ent )
 
     local enemies = self.Enemies 
 
-    local enemyIndexPos
-    if type(ent) == "number" then
-        -- ent is an index
-        for i, e in ipairs(enemies) do
-            if IsValid(e) and e:EntIndex() == ent then
-                enemyIndexPos = i
-                break
-            end
-        end
-    else
-        enemyIndexPos = table.KeyFromValue( enemies, ent )
-    end
+    
+
+    local enemyIndexPos = table.KeyFromValue( enemies, ent )
+
 
     if enemyIndexPos then 
         local removed = table.remove( enemies, enemyIndexPos )
 
         if removed == self.CurEnemy then 
-            gs_aimodule.SetEnemy( self, nil )
+            gs_aimodule.SetEnemy( self, nil, true )
           
         end 
 
@@ -413,10 +417,12 @@ function gs_aimodule.ChooseEnemyByPriority(self, attempt)
         if not enemy then return end 
         gs_aimodule.RemoveEnemy( self, enemy )
         gs_aimodule.ChooseEnemyByPriority( self, attempt + 1 )
+     
     end
 end 
     
 function gs_aimodule.SortEnemiesByPriority( self, sortFunc )
+    if not self.SortEnemies then return end 
     if not ( IsValid(self) and self.Enemies  ) then return end 
 
     if #self.Enemies < 2 then return end 

@@ -35,6 +35,8 @@ Tasks[ "EnemyManagement_Sight" ] = {
     end,
     ["OnEnemyRemoved"] = function(self, ent)
         if #self.Enemies == 0 then return  end 
+
+     
         gs_aimodule.SortEnemiesByPriority(self)
         gs_aimodule.ChooseEnemyByPriority( self )  
     end,
