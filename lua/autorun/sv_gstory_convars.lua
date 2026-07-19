@@ -20,5 +20,6 @@ cvars.AddChangeCallback( "gstory_ai_ignoreplayers", function(convar, oldvalue, n
             gs_aimodule.RemoveEnemy(nextbot, enemy) 
         end 
     end 
-
 end )
+
+CreateConVar( "gstory_enabled", "0", FCVAR_ARCHIVE, "Lets gStory change maps, player stats, etc." )

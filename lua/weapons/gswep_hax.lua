@@ -1,6 +1,6 @@
-SWEP.PrintName      = "[gStory] SMG1" 
+SWEP.PrintName      = "[gStory] Hax Mind-Gun" 
 SWEP.Author         = "E_Man" 
-SWEP.Instructions   = "USP with a higer shoot rate"
+SWEP.Instructions   = "HAAAAX!! HAAAAX!!"
 SWEP.Base = "gswep_base"
 SWEP.Spawnable      = false 
 
@@ -8,14 +8,14 @@ SWEP.Spawnable      = false
 --- ATTRIBUTES
 */ -----------------------------------------------------
 
-SWEP.WorldModel = "models/weapons/w_smg1.mdl"
+SWEP.WorldModel = ""
 
 SWEP.ReloadTime = 2
 
 SWEP.Primary.Automatic = true 
 SWEP.Secondary.Automatic = false
 
-SWEP.Primary.CanShoot = true 
+SWEP.Primary.CanShoot = false
 SWEP.Secondary.CanShoot = false 
 
 SWEP.MaxClip1Size = 45
@@ -24,9 +24,9 @@ SWEP.MaxClip2Size = 0
 SWEP.DefaultClip1 = 45
 SWEP.DefaultClip2 = 0
 
-SWEP.HoldType = "smg" 
+SWEP.HoldType = "magic" 
 
-SWEP.PrimaryCooldown = 0.1
+SWEP.PrimaryCooldown = 2
 SWEP.SecondaryCooldown = 0.2 
 
 SWEP.Primary.BulletConfig = {
@@ -55,10 +55,54 @@ SWEP.Secondary.BulletConfig = {
 --- CUSTOM HOOKS
 */ -----------------------------------------------------
 
-function SWEP:GSWEP_PrimaryAttack() 
-    local owner = self:GetOwner()
-    owner:AddGesture(ACT_HL2MP_GESTURE_RANGE_ATTACK_SMG1, true)
+local monitors =  {
+    "models/props_lab/monitor02.mdl",
+    "models/props_lab/monitor01a.mdl"
+}
+
+local function ThrowMonitor( owner )
+    local enemy = owner.CurEnemy 
+    if not enemy then return end
+    
+    local enemyPos = enemy:WorldSpaceCenter()
+    local ownerPos = owner:WorldSpaceCenter()
+    
+    local toEnemy = enemyPos - ownerPos 
+
+    toEnemy:Normalize()
+
+    local model = monitors[ math.random(2) ]
+
+    local monitor = ents.Create("prop_physics") 
+    
+    monitor:SetModel( model )
+    
+    
+    monitor:SetPos( owner:WorldSpaceCenter() + owner:GetForward() * 80 )
+
+    monitor:Spawn()
+
+    local physObj = monitor:GetPhysicsObject()
+
+    physObj:ApplyForceCenter( toEnemy * 1000000 )
+
+    timer.Simple(3, function()
+        if IsValid(monitor) then 
+            monitor:Remove() 
+        end 
+    end )
+
+    
+    
 end 
+
+function SWEP:GSWEP_PrimaryAttack()
+    local owner = self:GetOwner()
+
+    ThrowMonitor(owner) 
+    owner:EmitSound("vo/npc/male01/hacks01.wav")
+    
+end
 
 function SWEP:GSWEP_SecondaryAttack() end 
 
@@ -79,9 +123,7 @@ end
 function SWEP:GSWEP_Think() end 
 
 function SWEP:GSWEP_ReloadPrimary() 
-    
-    self:GS_ReloadPrimary( ACT_HL2MP_GESTURE_RELOAD_SMG1 )
-    self:GetOwner():EmitSound("weapons/smg1/smg1_reload.wav")
+
 end 
 
 function SWEP:GSWEP_ReloadSecondary() end 

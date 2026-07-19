@@ -332,13 +332,22 @@ local Movement = gs_aimodule.Movement
 Movement.Motion = {}
 
 Movement.Motion.Walk = {
-    speed = 20
+    speed = gs_aimodule.GenericWalkSpeed
 }
 
 Movement.Motion.Run = {
-    speed = 40
+    speed = gs_aimodule.GenericRunSpeed
 }
 
+Movement.Motion.Crouch = {
+    speed = gs_aimodule.GenericCrouchSpeed
+}
+
+Movement.Motion.CentralActivityToMotion = {
+    [ACT_WALK] = Movement.Motion.Walk,
+    [ACT_RUN]  = Movement.Motion.Run, 
+    [ACT_WALK_CROUCH] = Movement.Motion.Crouch 
+}
 
 -- Apply motion stats to the locomotion object
 function Movement.ApplyMotionStats(self, statsData)
@@ -355,6 +364,19 @@ function Movement.ApplyMotionStats(self, statsData)
     loco:SetAcceleration(acceleration)
     loco:SetDeceleration(deceleration)
 end
+
+function Movement.MapCAToMotion(self)
+    local defaultMap = Movement.Motion.CentralActivityToMotion
+
+    local map = self.CentralActivityToMotion or defaultMap
+    local centralAct = self.CentralActivity or ACT_RUN  
+
+    local motionStat = map[centralAct] or defaultMap[centralAct] or Movement.Motion.Run 
+
+    Movement.ApplyMotionStats(self, motionStat)
+
+
+end 
 
 local function ResolveAnimPacket( self, centralActivity, branch )
     local animPacketSet = self.AnimPacketSet or gStory_HoldTypeToAnim
@@ -392,6 +414,7 @@ function Movement.SetActivity(self, centralActivity, isPlayer, packet)
                 gs_aimodule.Warn( "Couldn't set activity—Input packet doesn't contain the specified central activity!" ) 
                 return 
             end 
+        self.CentralActivity = centralActivity
         self:StartActivity( act )
     end 
 
@@ -403,9 +426,19 @@ function Movement.SetActivity(self, centralActivity, isPlayer, packet)
         return 
     end 
 
+    self.CentralActivity = centralActivity
     self:StartActivity( act )
 
+    if self.AlwaysMapCAToMotion then 
+        gs_aimodule.Movement.MapCAToMotion(self)
+    end 
 end
+
+function Movement.UpdateActivity(self)
+    local centralActivity = self.CentralActivity 
+    if not centralActivity then return end
+    Movement.SetActivity( self, self.CentralActivity, self.IsPlayer )
+end 
 
 function Movement.GetAnimPacket(holdtype)
     return gStory_HoldTypeToAnim[ holdtype ]
@@ -462,8 +495,21 @@ function Movement.AimAtVector( self, pos )
    
     if not IsValid(self) or not pos then return end
 
+    -- Aim from the weapon muzzle position, fallback to center
+    local aimOrigin = self:WorldSpaceCenter()
+    /*
+    if IsValid(self.Weapon) then
+        local muzzleId = self.Weapon:LookupAttachment("muzzle")
+        if muzzleId > 0 then
+            local muzzleAtt = self.Weapon:GetAttachment(muzzleId)
+            if muzzleAtt then
+                aimOrigin = muzzleAtt.Pos
+            end
+        end
+    end
+    */
     
-    local dirVector = (pos - self:GetPos())
+    local dirVector = (pos - aimOrigin)
     local targetAngles = dirVector:Angle()
 
    

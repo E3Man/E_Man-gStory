@@ -12,6 +12,14 @@ Task.Tasks = Task.Tasks or {}
 include("entities/gsnpc_base/taskcontainer.lua")
 
 local function prioritySorting(x, y)
+
+    if not (x and y) then return end 
+
+    x = Task.Tasks[x]
+    y = Task.Tasks[y]
+
+    if not (x and y) then return end
+
     return (x.Priority or 0) < (y.Priority or 0)
 end
 
@@ -51,10 +59,9 @@ function Task.AddTask(self, taskName, ...)
 
 
 
-    if table.HasValue(self.ActiveTasks, taskName) then  print("SHI") return end
+    if table.HasValue(self.ActiveTasks, taskName) then return end
 
     if Task.Tasks[ taskName ] and Task.Tasks[ taskName ].RunBehaviour then 
-        self.HasTaskWithRunBehaviour = true 
         if self.HasTaskWithRunBehaviour then 
             for taskIndex, taskName in ipairs( self.ActiveTasks ) do 
                 local taskData = Task.Tasks[taskName]
@@ -62,7 +69,9 @@ function Task.AddTask(self, taskName, ...)
                     Task.RemoveTask( self, taskName, true )
                 end 
             end 
+            self.HasTaskWithRunBehaviour = false  -- Clear the flag before setting it again
         end
+        self.HasTaskWithRunBehaviour = true 
     end 
 
 
@@ -71,8 +80,11 @@ function Task.AddTask(self, taskName, ...)
     table.insert(self.ActiveTasks, taskName)
     Task.SortTasksByPriority(self)
 
-    if not Task.Tasks[taskName] or not Task.Tasks[taskName].OnTaskInitialization then return end
-    Task.Tasks[taskName].OnTaskInitialization(self, ...)
+    self:PreTaskInitialization(taskName)
+    if  Task.Tasks[taskName] and  Task.Tasks[taskName].OnTaskInitialization then 
+     Task.Tasks[taskName].OnTaskInitialization(self, ...)   
+    end
+    self:PostTaskInitialization(taskName)
 end
 
 function Task.RemoveTask(self, taskName, dontClearRunBehaviourFlag)
@@ -97,15 +109,44 @@ function Task.RemoveTask(self, taskName, dontClearRunBehaviourFlag)
         end
     end
 
+    self:TaskRemoval(taskName)
     Task.SortTasksByPriority(self)
 end
 
-function Task.RunPIdleTask(self)
-    Task.AddTask(self, self.PreferredIdleTask )
+
+
+function Task.RunPreferredTaskFor(self, goalName)
+    local taskName = self["Preferred"..(goalName or "Idle").."Task"]
+
+    if istable(taskName) then 
+        taskName = taskName[ math.random(#taskName) ]
+    end 
+
+    Task.AddTask(self, taskName) 
 end 
 
-function Task.RunPCombatTask(self)
-    Task.AddTask(self, self.PreferredCombatTask)
+function Task.RunPIdleOrCombatTask(self)
+    local hasEnemies = not table.IsEmpty(self.Enemies) 
+
+    local goal = hasEnemies and "Combat" or "Idle"
+
+
+    Task.RunPreferredTaskFor(self, goal)
+
 end 
+
+function Task.RunEssentialTasks(self)
+    local tasks = Task.EssentialTasks 
+
+    for _, task in ipairs(tasks) do 
+        Task.AddTask( self, task )
+    end 
+end 
+
+Task.EssentialTasks = {
+    "SensoryAI_IdleOnNoEnemies",
+    "SensoryAI_CombatOnEnemies",
+    "SensoryAI_FlagIdle"
+}
 
 include("entities/gsnpc_base/enemy_tasks.lua")

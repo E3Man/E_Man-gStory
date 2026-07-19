@@ -15,6 +15,8 @@ local Task = gs_aimodule.Task
 -- ATTRIBUTES
 */
 
+ENT.GS_AI = true 
+
 --- HEALTH ---
 ENT.InitialMaxHealth = 100
 ENT.InitialHealth = math.huge
@@ -35,13 +37,20 @@ ENT.SightDistance = 2000                 -- Maximum distance at which the NPC ca
 ENT.HearingDistance = 1000               -- Maximum distance at which the NPC can hear enemies
 ENT.FOV = 90                               -- Field of view angle for sight detection
 
+ENT.RangedAttackRange = 3000
+
+ENT.MinimumEnemyDistance = 200
+
+ENT.StressThreshold = 100
+
 ENT.UsesEnemyMemory = false 
 
 ENT.SortEnemies = true
 
 ENT.InitialMotionStats = {
-    speed = 400
+    speed = gs_aimodule.GenericRunSpeed 
 }
+
 ENT.MeleeAttackCooldown = 4
 
 ENT.EnemyManagement_Sight_OLS_RE = true -- On Sight Lost, Remove Enemy?
@@ -53,7 +62,14 @@ ENT.EnemySorter = "Distance"
 ENT.InitialTasks = {{name = "EnemyManagement_Sight"}}
 
 ENT.PreferredCombatTask = "TacticalAI_DogFight"
-ENT.PreferredIdleTask   = "TacticalAI_Idle"
+ENT.PreferredIdleTask   = "TacticalAI_Patrol"
+ENT.PreferredPanicTask  = "PanicAI_BreakPosture" 
+
+ENT.UseEssentialTasks = true
+
+ENT.AlwaysMapCAToMotion = true 
+
+ENT.IsPlayer = true -- If it uses playermodel models 
 
 /*--------------------------------------------------------------------
 -- CUSTOM HOOKS
@@ -102,21 +118,22 @@ function ENT:GSAI_OnEnemyRemoved( ent ) end -- Called when the bot no longer has
 function ENT:GSAI_OnRememberEnemy( ent, pos ) end
 
 function ENT:GSAI_OnForgetEnemy( ent ) end 
+
+function ENT:GSAI_PreTaskInitialization( task ) end 
+
+function ENT:GSAI_PostTaskInitialization( task ) end 
+
+function ENT:GSAI_TaskRemoval( task ) end 
   
 /*--------------------------------------------------------------------
 -- HOOKS
 */
 
-Task.Tasks[ "task_sight" ] = {
-    ["OnEntitySight"] = function( self, entity )
-        print("Omg hi " .. entity:GetClass())
-    end 
-}
+
 
 function ENT:Initialize()
 
     self:AddFlags(FL_OBJECT)
-    self:SetCollisionGroup( COLLISION_GROUP_DEBRIS )
 
     gs_aimodule.InitializeAI( self )
     self:GSAI_Initialize()
@@ -165,10 +182,6 @@ end
 function ENT:OnOtherKilled( victim, dmginfo )
     self:GSAI_OnOtherKilled( victim, dmginfo )
     Task.CallHookFromTask( self, "OnOtherKilled", victim, dmginfo )
-
-    if victim == self.CurEnemy then 
-        gs_aimodule.SetEnemy( self, nil )
-    end
 end
 
 -- 3. ENVIRONMENTAL RELAY
@@ -181,9 +194,10 @@ end
 
 function ENT:RunBehaviour()
     while true do 
+        if self.CoroutineInterrupted then coroutine.yield() continue end 
         Task.CallHookFromTask( self, "RunBehaviour" )
      
-      
+        coroutine.wait(0.15)
         coroutine.yield()
     end
 end 
@@ -223,6 +237,21 @@ function ENT:OnEnemyRemoved( ent )
     Task.CallHookFromTask(self, "OnEnemyRemoved", ent)
 end 
 
+function ENT:PostTaskInitialization( task ) 
+    self:GSAI_PostTaskInitialization(task)
+    Task.CallHookFromTask( self, "PostTaskInitialization", task )
+end 
+
+function ENT:PreTaskInitialization( task ) 
+    self:GSAI_PreTaskInitialization(task)
+    Task.CallHookFromTask( self, "PreTaskInitialization", task )
+end 
+
+function ENT:TaskRemoval(task)
+    self:GSAI_TaskRemoval(task)
+    Task.CallHookFromTask(self, "TaskRemoval", task)
+end 
+
 function ENT:BodyUpdate()
     local vel = self.loco:GetVelocity()
     local velDot = vel:Dot( vel )
@@ -236,8 +265,42 @@ function ENT:BodyUpdate()
 end 
 
 function ENT:OnStuck()
-    local area = navmesh.GetNearestNavArea(self:GetPos())
+    local area = navmesh.GetNearestNavArea(self:GetPos(), true, 5000)
+
+    if not area then self:Remove() end 
+
     local pos = area:GetCenter()
 
     self:SetPos( pos )
 end 
+
+function ENT:OnRemove()
+    table.RemoveByValue( gs_aimodule.nextbots, self )
+end 
+
+function ENT:OnContact( ent )
+    -- Oh look, something touched us. How daring.
+    if not IsValid(ent) then return end
+
+    -- We only care if the thing hitting us is moving with purpose
+    local phys = ent:GetPhysicsObject()
+    if IsValid(phys) and ent:GetClass() == "prop_physics" then
+        local velocity = phys:GetVelocity():Length()
+
+        
+        if velocity > 100 then 
+            local damage = velocity / 10 
+            
+            local dmgInfo = DamageInfo()
+            dmgInfo:SetAttacker(ent)
+            dmgInfo:SetInflictor(ent)
+            dmgInfo:SetDamage(damage)
+            dmgInfo:SetDamageType(DMG_CRUSH) 
+            
+            self:TakeDamageInfo(dmgInfo)
+            
+            -- Optional: Make a noise so we know it hurt
+            self:EmitSound("Physics.ImpactSoft")
+        end
+    end
+end

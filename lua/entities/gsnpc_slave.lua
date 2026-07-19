@@ -6,6 +6,12 @@ ENT.Category = "gStory" -- The category for this Entity in the spawn menu.
 ENT.Purpose = "A soul enslaved to overwhelm the gmodders." -- The purpose of this Entity.
 ENT.Spawnable = true -- Specifies whether this Entity can be spawned by players in the spawn menu.
 
+list.Set( "NPC", "gsnpc_slave", {
+	Name = "MingeTrooper",
+	Class = "gsnpc_slave",
+	Category = "gStory NPCs"
+})
+
 if (CLIENT) then return end 
 
 AddCSLuaFile()
@@ -36,83 +42,16 @@ ENT.MeleeAttackCooldown = 0.8
 ENT.RangedAttackRange = 2000
 
 ENT.PreferredCombatTask = "FodderAI_MeatShield"
-ENT.PreferredIdleTask   = "TacticalAI_Idle"
+ENT.PreferredIdleTask   = "TacticalAI_Patrol"
 
 ENT.InitialMotionStats = {
     speed = 300
 }
 
---- TASKS --- 
+ENT.PreferredCombatTask = "FodderAI_MeatShield"
+ENT.PreferredIdleTask   = "TacticalAI_Idle"
 
-ENT.InitialTasks = { {name = "EnemyManagement_Sight"}, {name = "TacticalAI_Idle"}, {name = "AI_ShootEnemy"} }
-
-local function VisibilityCost(self, area, fromArea, ladder, elevator, length)
-    local areaPos = area:GetCenter()
-    local enemyPos = self.CurEnemy and self.CurEnemy:GetPos() or vector_origin 
-
-    if not self.CurEnemy:VisibleVec( areaPos ) then 
-        return 5500 
-    end 
-
-    return 0
-
-end 
-
-Tasks["FodderAI_MeatShield"] = {
-    ["RunBehaviour"] = function(self)
-        if not IsValid(self.CurEnemy) then return end 
-        local ePos = self.CurEnemy:GetPos()
-        local pos = ePos + ( self.CurEnemy:GetForward() * Vector( math.random(300, 1000), math.random(300, 1000), self:GetPos().y ) )
-         gs_aimodule.Movement.SetActivity( self, ACT_RUN, true )
-     
-         self:MoveToPos(pos, { 
-            facetoward = self.CurEnemy, 
-            lookahead = math.random(50, 2000)
-        }, VisibilityCost)
-         gs_aimodule.Movement.SetActivity( self, ACT_IDLE, true )
-    end, 
-    ["OnEnemyRemoved"] = function(self, ent)
-        if #self.Enemies ~= 0 then return end 
-        Task.RunPIdleTask(self)
-    end 
- }
-
-Tasks["FodderAI_Flanker"] = {
-    ["RunBehaviour"] = function(self)
-        if not IsValid(self.CurEnemy) then return end 
-        
-        local ePos = self.CurEnemy:GetPos()
-        local eForward = self.CurEnemy:GetForward()
-        local eRight = self.CurEnemy:GetRight()
-        
-    
-        local sideFactor = math.random(0, 1) == 0 and -1 or 1
-   
-        local forwardDist = math.random(400, 800)
-        local sideDist = math.random(500, 1000) * sideFactor
-        
-        local targetPos = ePos + (eForward * forwardDist) + (eRight * sideDist)
-        
-      
-        targetPos.z = self:GetPos().z 
-
-        gs_aimodule.Movement.SetActivity(self, ACT_RUN, true)
-     
-        self:MoveToPos(targetPos, { 
-            facetoward = self.CurEnemy, 
-            lookahead = math.random(50, 500) 
-        })
-        
-        gs_aimodule.Movement.SetActivity(self, ACT_IDLE, true)
-    end, 
-
-    ["OnEnemyRemoved"] = function(self, ent)
-        if #self.Enemies ~= 0 then return end 
-        Task.RunPIdleTask(self)
-    end 
-}
-
---- MAIN HOOKS --- 
+ENT.InitialTasks = { {name = "EnemyManagement_Sight"}, {name = "TacticalAI_Patrol"}, {name = "AI_ShootEnemy"} }
 
 local function MelonHead(ent)
     if not IsValid(ent) then return end
@@ -138,8 +77,6 @@ local function MelonHead(ent)
     melon:SetLocalPos(Vector(4, 0, 0)) 
     melon:SetLocalAngles(Angle(0, 0, 0))
 
-
-
     ent.MelonHead = melon 
 
     return melon
@@ -157,9 +94,6 @@ function ENT:GSAI_Initialize()
     MelonHead(self)
     
 
-
-    self.PreferredCombatTask = combatTasks[ math.random(#combatTasks) ]
-
 end 
 
 function ENT:GSAI_OnKilled()
@@ -168,9 +102,8 @@ function ENT:GSAI_OnKilled()
     self.MelonHead:Remove()
     end 
 
-
     self:EmitSound("npc/overwatch/radiovoice/die"..math.random(3)..".wav", 90, math.random(60, 180), 2)
-end 
+end
 
 
 

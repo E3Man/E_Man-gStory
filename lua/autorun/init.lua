@@ -26,5 +26,33 @@ This is a love letter to the community. This was written in 17/12/2025. Thank yo
 
 */
 
+hook.Add("PlayerSpawn", "GS_PlayerFaction", function(ply)
+    ply.Faction = "FACTION_GMOD"
+end )
+
+hook.Add( "PlayerCanPickupWeapon", "GS_AntiGSWEPPickup", function( ply, weapon )
+    return ( weapon.GS_WEP ~= true )
+end )
+
+hook.Add("PlayerSay", "GS_RequestMedic", function(ply, txt)
+    pattern = "medic"
+    txtLower = string.lower(txt) 
+
+    local match = string.match(txtLower, pattern)
+
+    if match  then 
+        local gmodMedics = ents.FindByClass("gsnpc_healer")
+        for k, medic in ipairs(gmodMedics) do 
+            table.insert( medic.HealQueue, ply )
+            gs_aimodule.Task.RunPreferredTaskFor(medic, "Combat")
+        end 
+    end 
+end )
 
 
+hook.Add("PlayerSpawn", "GS_SetPlayerMovementSpeed", function(ply)
+    if not GetConVar("gstory_enabled"):GetBool() then return end 
+    timer.Simple(0.1, function()
+        ply:SetRunSpeed(gs_aimodule.GenericRunSpeed)
+    end)
+end )

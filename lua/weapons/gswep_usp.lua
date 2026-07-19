@@ -1,6 +1,6 @@
-SWEP.PrintName      = "[gStory] SMG1" 
+SWEP.PrintName      = "[gStory] USP" 
 SWEP.Author         = "E_Man" 
-SWEP.Instructions   = "USP with a higer shoot rate"
+SWEP.Instructions   = "USP "
 SWEP.Base = "gswep_base"
 SWEP.Spawnable      = false 
 
@@ -26,11 +26,11 @@ SWEP.DefaultClip2 = 0
 
 SWEP.HoldType = "pistol" 
 
-SWEP.PrimaryCooldown = 0.2
+SWEP.PrimaryCooldown = 0.7
 SWEP.SecondaryCooldown = 0.2 
 
 SWEP.Primary.BulletConfig = {
-    Damage      = 4,
+    Damage      = 8,
     Force       = 5,
     NumShots    = 1,            -- How many pellets per shot (set >1 for shotguns)
     Delay       = 0.3,          -- Time between shots
@@ -79,9 +79,9 @@ end
 function SWEP:GSWEP_Think() end 
 
 function SWEP:GSWEP_ReloadPrimary() 
-    print("COOL SHIT")
+  
     self:GS_ReloadPrimary( ACT_HL2MP_GESTURE_RELOAD_PISTOL )
-    self:GetOwner():EmitSound("weapons/smg1/smg1_reload.wav")
+    self:GetOwner():EmitSound("weapons/pistol/pistol_reload1.wav")
 end 
 
 function SWEP:GSWEP_ReloadSecondary() end 

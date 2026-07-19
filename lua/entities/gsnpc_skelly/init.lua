@@ -26,6 +26,7 @@ ENT.InitialHealth = 10
 
 ENT.MeleeAttackCooldown = 0.8
 
+/*
 ENT.AnimPacketSet = { -- How the entity will react to specific holdtypes or animation packets
     none = {
         ply = {
@@ -35,6 +36,7 @@ ENT.AnimPacketSet = { -- How the entity will react to specific holdtypes or anim
         }
     }
 }
+    */
 
 local function MeleeAttack( self, cool, target ) 
     if cool then return end 

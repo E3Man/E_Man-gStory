@@ -8,6 +8,48 @@ gs_aimodule = {}
 gs_aimodule.nextbots = {}
 
 -- -------------------------
+-- Constants
+-- -------------------------
+gs_aimodule.GmodderPlayerModels = {
+
+    "models/player/group01/male_01.mdl",
+    "models/player/group01/male_02.mdl",
+    "models/player/group01/male_03.mdl",
+    "models/player/group01/male_04.mdl",
+    "models/player/group01/male_05.mdl",
+    "models/player/group01/male_06.mdl",
+    "models/player/group01/male_07.mdl",
+    "models/player/group01/male_08.mdl",
+    "models/player/group01/male_09.mdl",
+    
+    "models/player/group01/female_01.mdl",
+    "models/player/group01/female_02.mdl",
+    "models/player/group01/female_03.mdl",
+    "models/player/group01/female_04.mdl",
+    "models/player/group01/female_05.mdl",
+    "models/player/group01/female_06.mdl",
+    
+    "models/player/combine_soldier.mdl",
+    "models/player/combine_soldier_prisonguard.mdl",
+    "models/player/combine_super_soldier.mdl",
+    "models/player/police.mdl",
+    "models/player/breen.mdl",
+    "models/player/mossman.mdl",
+    "models/player/eli.mdl",
+    "models/player/gman_high.mdl",
+    "models/player/alyx.mdl",
+    "models/player/barney.mdl",
+    "models/player/charple.mdl",
+    "models/player/corpse1.mdl",
+    "models/player/skeleton.mdl" 
+}
+
+
+gs_aimodule.GenericRunSpeed = 340
+gs_aimodule.GenericWalkSpeed = 200
+gs_aimodule.GenericCrouchSpeed = 100 
+
+-- -------------------------
 -- Utilities
 -- -------------------------
 function gs_aimodule.Warn(str)
@@ -69,22 +111,47 @@ end
 function gs_aimodule.InitializeAI(self)
     if not self.Inventory then self.Inventory = {} end
 
+    self:PhysicsInitShadow( true, true )
+    self:PhysWake()
+
+    local min = Vector(-50, -50, -50)
+    local max = Vector(50, 50, 50)
+
+    self:SetCollisionBounds(min, max)
+ 
+    self:SetSolid(SOLID_BBOX) -- Essential for the bounds to work
+
 
 
     local mdl = self.Model
 
-    self:SetModel(mdl)
+    if isstring(mdl) then 
+        self:SetModel(mdl)
+    elseif istable(mdl) then 
+        local chosenMdl = mdl[ math.random(#mdl) ]
+        self:SetModel(chosenMdl) 
+    elseif isfunction(mdl) then 
+        mdl(self)
+    end 
+
+  
+
+
     self:SetFOV(self.FOV)
     self:SetMaxVisionRange(self.SightDistance)
 
     self:SetHealth(self.InitialHealth or self.InitialMaxHealth)
     self:SetMaxHealth(self.InitialMaxHealth or self.InitialHealth)
 
-   self.loco:SetStepHeight(45)
+    self.loco:SetStepHeight(45)
+
+    self.Enemies = {}
+    self.EnemiesSet = {}
 
     gs_aimodule.Movement.ApplyMotionStats( self, self.InitialMotionStats )
 
     gs_aimodule.Movement.ApplyHoldTypeAnimPacket(self)
+
 
 
     if self.Weapon then
@@ -96,8 +163,14 @@ function gs_aimodule.InitializeAI(self)
         end 
     end
 
+    gs_aimodule.SetupInventory(self)
+
     -- Register a cleanup callback so when this NPC is removed we also remove any callbacks we created on other entities
     gs_aimodule.AddRemoveCallback(self, self, "self_cleanup", gs_aimodule.RemoveAllRemoveCallbacks, self) 
+
+    if self.UseEssentialTasks then 
+        gs_aimodule.Task.RunEssentialTasks(self)
+    end 
 
     table.insert( gs_aimodule.nextbots, self )
 
@@ -141,6 +214,7 @@ function gs_aimodule.EquipWeapon(self, wep)
 
             if wep == class then 
                 gs_aimodule.EquipWeapon(self, weapon)
+                return
             end 
         end 
     end 
@@ -148,12 +222,13 @@ function gs_aimodule.EquipWeapon(self, wep)
     pcall(function() wep:OwnerChanged() end)
     pcall(function() wep:Equip(self) end)
 
-    gs_aimodule.ShowWeapon(self, wep)
+    gs_aimodule.ShowWeapon(wep)
     gs_aimodule.HandWeapon(self, wep)
 
     self.Weapon = wep
 
     gs_aimodule.Movement.ApplyHoldTypeAnimPacket(self)
+    gs_aimodule.Movement.UpdateActivity( self )
 end
 
 function gs_aimodule.HideWeapon(wep)
@@ -177,7 +252,6 @@ function gs_aimodule.RegisterWeaponInInv(self, wep)
     if table.KeyFromValue(inv, wep) then return end
 
     table.insert(inv, wep)
-    self.Inventory = inv
 
     wep:CallOnRemove("gs_wep_removeCall", function()
         local inventoryPosition = table.KeyFromValue(inv, wep)
@@ -235,11 +309,15 @@ function gs_aimodule.UnequipWeapon(self)
     if IsValid(self.Weapon) then
         gs_aimodule.HideWeapon(self.Weapon)
     end
+    self.PreviousWeapon = self.Weapon 
     self.Weapon = nil
     gs_aimodule.Movement.ApplyHoldTypeAnimPacket(self)
+    gs_aimodule.Movement.UpdateActivity(self) 
 end
 
 function gs_aimodule.AcquireWeapon( self, wep ) -- Adds weapon to the bot's inventory, but doesn't automatically equip it
+
+
     gs_aimodule.HideWeapon( wep )
     gs_aimodule.HandWeapon( self, wep )
 
@@ -251,9 +329,11 @@ function gs_aimodule.SetupInventory( self )
 
     local inventory = self.Inventory 
     for i, weaponClass in ipairs( inventory ) do 
+        if not isstring(weaponClass) then continue end
         local wep = ents.Create( weaponClass ) 
         if not (IsValid(wep) and IsValid( self )) then continue end 
-        
+        wep:Spawn()
+        wep:Activate()
         gs_aimodule.AcquireWeapon( self, wep )
         
     end
@@ -337,7 +417,7 @@ function gs_aimodule.SetEnemy( self, ent, fromRemoveEnemy )
     gs_aimodule.AddEnemy( self, ent )
 
 
-    self:OnSetEnemy( self, ent )
+    self:OnSetEnemy( ent )
 
 end 
 
@@ -353,13 +433,14 @@ end
 function gs_aimodule.AddEnemy( self, ent )
     if GetConVar("gstory_ai_ignoreplayers"):GetBool() and ent:IsPlayer() then return end
     if not ( IsValid(self) and IsValid( ent ) ) then return end 
-    self.Enemies = self.Enemies or {}
+    self.Enemies = self.Enemies 
 
     local enemies = self.Enemies 
 
-    if table.HasValue( enemies, ent ) then return end 
+    if self.EnemiesSet[ ent:EntIndex() ] then return end 
 
     table.insert( enemies, ent )
+    self.EnemiesSet[ ent:EntIndex() ] = true 
 
     -- Notify that an enemy was added
     if self.OnEnemyAdded then
@@ -385,6 +466,8 @@ function gs_aimodule.RemoveEnemy( self, ent )
 
     if enemyIndexPos then 
         local removed = table.remove( enemies, enemyIndexPos )
+
+        self.EnemiesSet[ removed:EntIndex() ] = nil
 
         if removed == self.CurEnemy then 
             gs_aimodule.SetEnemy( self, nil, true )

@@ -21,3 +21,8 @@ function ENT:GetShootPos()
 end 
 
 function ENT:ViewPunch() end 
+
+function ENT:GSAI_HeadTarget(target)
+    if not IsValid(target) then return end
+    return target:WorldSpaceCenter()
+end

@@ -185,6 +185,8 @@ function Factions.GetDisposition( subject, target )
     local subjFaction = Factions.ResolveFaction( subject )
     local tgtFaction  = Factions.ResolveFaction( target )
 
+
+
     local instanceDisposition = Factions.GetInstanceRelationship( subject, target )
 
     if instanceDisposition then 
@@ -195,6 +197,10 @@ function Factions.GetDisposition( subject, target )
         return Factions[ subjFaction ][ tgtFaction ]
     end
 
+    if subjFaction == tgtFaction then
+  
+        return D_LI 
+    end 
 
     if IsValid( subject ) and subject.Attitude then
         return subject.Attitude

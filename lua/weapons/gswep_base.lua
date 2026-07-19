@@ -9,6 +9,8 @@ SWEP.Spawnable      = false
 --- ATTRIBUTES
 */ -----------------------------------------------------
 
+SWEP.GS_WEP = true
+
 SWEP.WorldModel = "models/weapons/w_smg1.mdl"
 SWEP.ReloadTime = 3
 
@@ -25,7 +27,7 @@ SWEP.DefaultClip2 = 0
 SWEP.HoldType = "smg" 
 
 SWEP.PrimaryCooldown = 0.2
-SWEP.SecondaryCooldown = 0.2 
+SWEP.SecondaryCooldown = 0.2  
 
 SWEP.Primary.BulletConfig = {
     Damage      = 10,
@@ -116,7 +118,10 @@ function SWEP:GS_ReloadPrimary(act)
     local owner = self:GetOwner()
     if not IsValid(owner) or self.IsReloading then return end 
 
-    if act then owner:AddGesture( act, true ) end
+    if act then 
+        local id = owner:AddGesture( act, true ) 
+        self:SetLayerPlaybackRate( id, 1 / self.ReloadTime )
+    end
     self.IsReloading = true 
     
     timer.Simple(self.ReloadTime, function()
@@ -161,8 +166,15 @@ function SWEP:PrimaryAttack()
 
     self:GSWEP_PrimaryAttack()
 
+    local delay = self.PrimaryCooldown or 0.1
+    self:SetNextPrimaryFire( CurTime() + delay )
+
+    if not self.Primary.CanShoot then return end 
+
     local config = self.Primary.BulletConfig or {}
     local bullet = {
+        Attacker = self.Owner,
+        Inflictor = self,
         Num         = config.NumShots   or 1,
         Src         = self.Owner:GetShootPos(),
         Dir         = self.Owner:GetAimVector(),
@@ -174,8 +186,6 @@ function SWEP:PrimaryAttack()
         AmmoType    = self.Primary.Ammo
     }
 
-    if not self.Primary.CanShoot then return end 
-
     self:GSWEP_FireBullet(bullet)
     self:FireBullets(bullet)
     self:EmitSound( config.ShootSound or "Weapon_Pistol.Single" )
@@ -184,8 +194,7 @@ function SWEP:PrimaryAttack()
         self:GS_TakeFromClip1(1)
     end 
     
-    local delay = config.Delay or 0.1
-    self:SetNextPrimaryFire( CurTime() + delay )
+
 end
 
 function SWEP:SecondaryAttack()
@@ -206,9 +215,17 @@ function SWEP:SecondaryAttack()
     -- 2. Call the custom attack hook (for logic like animations or alerts)
     self:GSWEP_SecondaryAttack()
 
-    -- 3. Build the bullet using the Secondary BulletConfig
+    
+
+    local delay = self.SecondaryCooldown or 0.1
+    self:SetNextSecondaryFire(CurTime() + delay)
+    -- 4. Safety check to see if secondary fire is enabled at all
+    if not self.Secondary.CanShoot then return end 
+
     local config = self.Secondary.BulletConfig or {}
     local bullet = {
+        Attacker = self.Owner,
+        Inflictor = self,
         Num         = config.NumShots   or 1,
         Src         = self.Owner:GetShootPos(),
         Dir         = self.Owner:GetAimVector(),
@@ -219,9 +236,6 @@ function SWEP:SecondaryAttack()
         Damage      = config.Damage     or 10,
         AmmoType    = self.Secondary.Ammo
     }
-
-    -- 4. Safety check to see if secondary fire is enabled at all
-    if not self.Secondary.CanShoot then return end 
 
     -- 5. Final custom hook before firing (allows modifying the 'bullet' table by reference)
     self:GSWEP_FireBullet(bullet)
@@ -236,6 +250,21 @@ function SWEP:SecondaryAttack()
     end 
     
     -- 8. Set timing for the next shot
-    local delay = config.Delay or 0.1
-    self:SetNextSecondaryFire(CurTime() + delay)
+
+end
+
+function SWEP:PlaySoundSequence(sounds, index, pause)
+    index = index or 1
+    if index > #sounds then return end
+    
+    local sound = sounds[index]
+
+    if not IsValid(self:GetOwner()) then return end 
+
+    self:GetOwner():EmitSound(sound)
+    
+    timer.Simple(SoundDuration(sound) + (pause or 0.2), function()
+        if not IsValid(self) then return end 
+        self:PlaySoundSequence(sounds, index + 1, pause) 
+    end)
 end

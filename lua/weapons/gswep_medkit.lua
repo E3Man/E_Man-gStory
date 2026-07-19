@@ -1,6 +1,6 @@
-SWEP.PrintName      = "[gStory] SMG1" 
+SWEP.PrintName      = "[gStory] Medkit" 
 SWEP.Author         = "E_Man" 
-SWEP.Instructions   = "USP with a higer shoot rate"
+SWEP.Instructions   = "MEDICCC!!"
 SWEP.Base = "gswep_base"
 SWEP.Spawnable      = false 
 
@@ -8,14 +8,14 @@ SWEP.Spawnable      = false
 --- ATTRIBUTES
 */ -----------------------------------------------------
 
-SWEP.WorldModel = "models/weapons/w_smg1.mdl"
+SWEP.WorldModel = "models/weapons/w_medkit.mdl"
 
 SWEP.ReloadTime = 2
 
 SWEP.Primary.Automatic = true 
 SWEP.Secondary.Automatic = false
 
-SWEP.Primary.CanShoot = true 
+SWEP.Primary.CanShoot = false
 SWEP.Secondary.CanShoot = false 
 
 SWEP.MaxClip1Size = 45
@@ -24,9 +24,9 @@ SWEP.MaxClip2Size = 0
 SWEP.DefaultClip1 = 45
 SWEP.DefaultClip2 = 0
 
-SWEP.HoldType = "smg" 
+SWEP.HoldType = "slam" 
 
-SWEP.PrimaryCooldown = 0.1
+SWEP.PrimaryCooldown = 0.15
 SWEP.SecondaryCooldown = 0.2 
 
 SWEP.Primary.BulletConfig = {
@@ -55,10 +55,55 @@ SWEP.Secondary.BulletConfig = {
 --- CUSTOM HOOKS
 */ -----------------------------------------------------
 
-function SWEP:GSWEP_PrimaryAttack() 
+function SWEP:GSWEP_PrimaryAttack()
     local owner = self:GetOwner()
-    owner:AddGesture(ACT_HL2MP_GESTURE_RANGE_ATTACK_SMG1, true)
-end 
+
+    -- 1. Safety check to ensure owner exists
+    if not IsValid(owner) then return end
+
+
+
+ 
+    owner:AddGesture(ACT_HL2MP_GESTURE_RANGE_ATTACK_SLAM, true)
+   
+    local aimVec = owner:GetForward()
+    local startPos = owner:GetPos() + Vector(0,0,50)
+    local endPos = startPos + (aimVec * 160) 
+
+    debugoverlay.Line(startPos, endPos, 0.5, Color(255,255,255), true)
+
+    local tr = util.TraceLine({
+        start = startPos,
+        endpos = endPos,
+        filter = owner 
+    })
+
+    
+
+    if SERVER then
+        local ent = tr.Entity
+
+       
+        if tr.Hit and IsValid(ent) and (ent:IsPlayer() or ent.GS_AI) then
+            
+            local healAmount = 25
+            local currentHealth = ent:Health()
+            local maxHealth = ent:GetMaxHealth()
+
+            if currentHealth < maxHealth then
+    
+                ent:SetHealth(math.min(maxHealth, currentHealth + healAmount))
+
+    
+                ent:EmitSound("HealthVial.Touch") 
+                
+     
+            end
+        else
+            self:EmitSound("Weapon_Crowbar.Single")
+        end
+    end
+end
 
 function SWEP:GSWEP_SecondaryAttack() end 
 
@@ -79,9 +124,7 @@ end
 function SWEP:GSWEP_Think() end 
 
 function SWEP:GSWEP_ReloadPrimary() 
-    
-    self:GS_ReloadPrimary( ACT_HL2MP_GESTURE_RELOAD_SMG1 )
-    self:GetOwner():EmitSound("weapons/smg1/smg1_reload.wav")
+
 end 
 
 function SWEP:GSWEP_ReloadSecondary() end 

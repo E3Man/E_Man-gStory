@@ -1,3 +1,5 @@
+gs_aimodule = gs_aimodule or {}
+
 local function defaultGenerator( self, area, fromArea, ladder, elevator, length )
 	if ( !IsValid( fromArea ) ) then
 
@@ -120,6 +122,7 @@ function ENT:MoveToPos( pos, options, generator )
 	local path = Path( "Follow" )
 	path:SetMinLookAheadDistance( options.lookahead or 300 )
 	path:SetGoalTolerance( options.tolerance or 20 )
+	if not pos then return end
 	path:Compute( self, pos, finalGenerator )
 
 	if ( !path:IsValid() ) then return "failed" end
@@ -127,11 +130,22 @@ function ENT:MoveToPos( pos, options, generator )
 -- Loop while path is valid and not interrupted
 	while ( path:IsValid()) do
 
-        if self.CoroutineInterrupted == true then return end 
+        if self.CoroutineInterrupted == true then return "interrupted" end 
 
 		path:Update( self )
-		if IsValid(options.facetoward) then 
-			self.loco:FaceTowards( options.facetoward:GetPos() )
+		if IsValid(options.facetoward) or options.faceenemy then
+		
+
+			local target = options.facetoward 
+			if IsValid(self.CurEnemy) and options.faceenemy then 
+				target = self.CurEnemy 
+				
+			end 
+
+			if IsValid(target) then 
+			
+			self.loco:FaceTowards( target:GetPos() )
+			end 
 		end 
 
 		-- Draw the path (only visible on listen servers or single player)
@@ -175,14 +189,41 @@ function ENT:MoveToPos( pos, options, generator )
 
 end
 
+function gs_aimodule.GetNearestPointTo(vector, radius)
+	radius = radius or 1000
 
-function ENT:MoveToward( pos, bool )
-	self.loco:Approach( pos, 1 )
-	if bool then 
-		self.loco:FaceTowards( pos )
+	local area = navmesh.GetNearestNavArea( vector, radius )
+
+	if area then 
+		local pos = area:GetClosestPointOnArea( vector ) 
+		return pos 
 	end 
 end 
 
+function gs_aimodule.GetRandomPointNearVector(vector, radius)
+	radius = radius or 1000
 
+	local area = navmesh.GetNearestNavArea( vector, radius )
 
+	if area then 
+		local pos = area:GetRandomPoint() 
+		return pos 
+	end 
+end 
 
+function gs_aimodule.GetAdjecentRandomPoints(self, radius)
+	radius = radius or 1000
+
+	local area = navmesh.GetNearestNavArea( self:GetPos(), radius )
+
+	if area then 
+		local adjacentAreas = area:GetAdjacentAreas()
+
+		local adjacentArea = adjacentAreas[ math.random( #adjacentAreas ) ] 
+
+		local pos = adjacentArea:GetRandomPoint()
+		
+		return pos 
+		
+	end 
+end 
