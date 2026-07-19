@@ -16,6 +16,7 @@ local Task = gs_aimodule.Task
 */
 
 ENT.GS_AI = true 
+ENT.GS_Detectable = true
 
 --- HEALTH ---
 ENT.InitialMaxHealth = 100
@@ -32,10 +33,9 @@ ENT.Inventory = {}                 -- Additional weapons to put in the NPC's inv
 --- BEHAVIOUR ---
 ENT.Faction = "FACTION_GMOD"         -- Faction the NPC belongs to
 ENT.Attitude = D_HT                      -- Default attitude of the NPC towards other NPCs
-ENT.UseLineOfSight = true                -- Whether the NPC needs line of sight to detect enemies
-ENT.SightDistance = 2000                 -- Maximum distance at which the NPC can see enemies
-ENT.HearingDistance = 1000               -- Maximum distance at which the NPC can hear enemies
-ENT.FOV = 90                               -- Field of view angle for sight detection
+ENT.SightDistance = 4000                 -- Maximum distance at which the NPC can see enemies
+ENT.HearingDistance = 2000               -- Maximum distance at which the NPC can hear enemies
+ENT.FOV = 120                      -- Field of view angle for sight detection
 
 ENT.RangedAttackRange = 3000
 
@@ -70,6 +70,8 @@ ENT.UseEssentialTasks = true
 ENT.AlwaysMapCAToMotion = true 
 
 ENT.IsPlayer = true -- If it uses playermodel models 
+
+ENT.CanInstaDrown = true
 
 /*--------------------------------------------------------------------
 -- CUSTOM HOOKS
@@ -124,6 +126,8 @@ function ENT:GSAI_PreTaskInitialization( task ) end
 function ENT:GSAI_PostTaskInitialization( task ) end 
 
 function ENT:GSAI_TaskRemoval( task ) end 
+
+function ENT:GSAI_OnLandOnGround( ent ) end 
   
 /*--------------------------------------------------------------------
 -- HOOKS
@@ -132,6 +136,7 @@ function ENT:GSAI_TaskRemoval( task ) end
 
 
 function ENT:Initialize()
+
 
     self:AddFlags(FL_OBJECT)
 
@@ -159,13 +164,14 @@ function ENT:Think()
 end
 
 -- 1. SIGHT/SENSORY RELAY
-function ENT:OnEntitySight( ent )
+function ENT:Internal_OnEntitySight( ent )
+    
     if GetConVar("gstory_ai_ignoreplayers"):GetBool() and ent:IsPlayer() then return end 
     self:GSAI_OnEntitySight( ent )
     Task.CallHookFromTask( self, "OnEntitySight", ent )
 end
 
-function ENT:OnEntitySightLost( ent )
+function ENT:Internal_OnEntitySightLost( ent )
 
     self:GSAI_OnEntitySightLost( ent )
     Task.CallHookFromTask( self, "OnEntitySightLost", ent )
@@ -252,15 +258,22 @@ function ENT:TaskRemoval(task)
     Task.CallHookFromTask(self, "TaskRemoval", task)
 end 
 
+function ENT:OnLandOnGround(ent)
+    self:GSAI_OnLandOnGround(ent)
+    Task.CallHookFromTask(self, "OnLandOnGround", ent)
+end 
+
 function ENT:BodyUpdate()
     local vel = self.loco:GetVelocity()
     local velDot = vel:Dot( vel )
 
     if velDot > 0.00001 then 
         self:BodyMoveXY()
+        self.IsMoving = true 
         return
     end
 
+    self.IsMoving = false 
 	self:FrameAdvance()
 end 
 
@@ -303,4 +316,15 @@ function ENT:OnContact( ent )
             self:EmitSound("Physics.ImpactSoft")
         end
     end
+end
+
+function ENT:EyePos()
+ 
+    local attachment = self:LookupAttachment("eyes")
+    if attachment and attachment > 0 then
+        return self:GetAttachment(attachment).Pos
+    end
+
+
+    return self:GetPos() + Vector(0, 0, 48) + (self:GetForward() * 10)
 end

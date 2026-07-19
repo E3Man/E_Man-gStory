@@ -7,7 +7,7 @@ ENT.Purpose = "[REDACTED]" -- The purpose of this Entity.
 ENT.Spawnable = true -- Specifies whether this Entity can be spawned by players in the spawn menu.
 ENT.AdminOnly = true
 
-list.Set( "NPC", "gsnpc_haxling", {
+list.Set( "NPC", "gsnpc_melonist", {
 	Name = "Melonist",
 	Class = "gsnpc_melonist",
 	Category = "gStory NPCs"
@@ -31,12 +31,11 @@ ENT.Inventory = {}                 -- Additional weapons to put in the NPC's inv
 ENT.Faction = "FACTION_MINGEBAGS"         -- Faction the NPC belongs to
 ENT.Attitude = D_HT                      -- Default attitude of the NPC towards other NPCs
 ENT.UseLineOfSight = true                -- Whether the NPC needs line of sight to detect enemies
-ENT.SightDistance = 7000                 -- Maximum distance at which the NPC can see enemies
-ENT.HearingDistance = 1000               -- Maximum distance at which the NPC can hear enemies
-ENT.FOV = 180   
 
-ENT.InitialMaxHealth = 100
-ENT.InitialHealth = 100
+
+
+ENT.InitialMaxHealth = 1000
+ENT.InitialHealth = 10000
 
 ENT.MeleeAttackCooldown = 0.8
 
@@ -54,7 +53,7 @@ ENT.AnimPacketSet = { -- How the entity will react to specific holdtypes or anim
 
 ENT.InitialTasks = { {name = "EnemyManagement_Sight"}, {name = "TacticalAI_Patrol"}, {name = "AI_ShootEnemy"}, {name = "SensoryAI_PanicOnOtherKilled"} }
 
-ENT.PreferredCombatTask = "TacticalAI_Strafe"
+ENT.PreferredCombatTask =  "TacticalAI_Strafe"
 ENT.PreferredIdleTask = {"TacticalAI_Patrol", "TacticalAI_PatrolChill"}
 
 --- MAIN HOOKS --- 

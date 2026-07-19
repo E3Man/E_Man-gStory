@@ -8,6 +8,7 @@ gs_aimodule.Task = gs_aimodule.Task or {}
 local Task = gs_aimodule.Task
 
 Task.Tasks = Task.Tasks or {}
+local Tasks = Task.Tasks
 
 include("entities/gsnpc_base/taskcontainer.lua")
 
@@ -146,7 +147,13 @@ end
 Task.EssentialTasks = {
     "SensoryAI_IdleOnNoEnemies",
     "SensoryAI_CombatOnEnemies",
-    "SensoryAI_FlagIdle"
+    "SensoryAI_FlagIdle",
+    "SensoryAI_SightSystem",
+    "SensoryAI_ResumeAnimOnLand",
+    "NoFriendlyFire",
+    
 }
+
+
 
 include("entities/gsnpc_base/enemy_tasks.lua")

@@ -24,16 +24,14 @@ ENT.Model = gs_aimodule.GmodderPlayerModels  -- Model used by the NPC
 ENT.Bodygroup = {}                       -- Bodygroups to set on the model
 
 --- WEAPONS & BACKPACK ---
-ENT.Weapon = {"gswep_usp","gswep_revolver", "gswep_smg1", "gswep_shotgun"}          -- Weapon used by the NPC. Will also be put in its inventory
+ENT.Weapon = {"gswep_usp", "gswep_smg1", "gswep_shotgun"}          -- Weapon used by the NPC. Will also be put in its inventory
 ENT.Inventory = {}                 -- Additional weapons to put in the NPC's inventory
 
 --- BEHAVIOUR ---
 ENT.Faction = "FACTION_GMOD"         -- Faction the NPC belongs to
 ENT.Attitude = D_HT                      -- Default attitude of the NPC towards other NPCs
 ENT.UseLineOfSight = true                -- Whether the NPC needs line of sight to detect enemies
-ENT.SightDistance = 7000                 -- Maximum distance at which the NPC can see enemies
-ENT.HearingDistance = 1000               -- Maximum distance at which the NPC can hear enemies
-ENT.FOV = 180   
+
 
 ENT.InitialMaxHealth = 100
 ENT.InitialHealth = 100

@@ -5,10 +5,11 @@ local Factions = gs_aimodule.Factions
 
 Tasks[ "EnemyManagement_Sight" ] = {
     ["OnEntitySight"] = function(self, ent)
-
+        if not (ent.GS_Detectable) then return end 
      
 
-     
+    
+
         if not Factions.IsHostileTo(self, ent) then return end 
        
             gs_aimodule.AddEnemy( self, ent )
@@ -47,7 +48,8 @@ Tasks[ "EnemyManagement_Sight" ] = {
 
         
 
-        if self.EnemiesSet[ attacker:EntIndex() ] then return end 
+        if self.EnemiesSet[ attacker:EntIndex() ] then  gs_aimodule.SetEnemy(self, attacker) return end 
+
 
         gs_aimodule.PerformActionWithCooldown(self, "AddEnemyOnInjured", 0.5, function(self, inCooldown)
             if inCooldown then return end 
@@ -59,4 +61,12 @@ Tasks[ "EnemyManagement_Sight" ] = {
         end)
     end,
     Priority = 100
+}
+
+Tasks["NoFriendlyFire"] = {
+    ["OnInjured"] = function(self,  attacker, inflictor, dmginfo)
+        if gs_aimodule.Factions.GetDisposition(self, attacker) != D_LI then return end 
+        
+        dmginfo:SetDamage(0)
+    end 
 }

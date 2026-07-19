@@ -6,20 +6,7 @@ local function sign(x)
 end 
 
 
--- movement.lua
--- Movement / animation packet definitions for gs_aimodule
---
--- Changes: Modularized animation packet system
--- - Added registration API: Movement.RegisterAnimPacket/Unregister/Get
--- - Entities may set `self.CurAnimPacket` (string name) or pass packet tables to Movement.SetActivity
--- - Movement.ApplyHoldTypeAnimPacket now uses registered packets and clears stale packets
--- - Backwards compatible: `gs_aimodule.AnimPackets` still points to the default mapping (gStory_HoldTypeToAnim)
---
--- Example:
--- local pkt = { ply = { [ACT_IDLE] = ACT_HL2MP_IDLE_PISTOL }, npc = { [ACT_IDLE] = ACT_IDLE_ANGRY_PISTOL } }
--- gs_aimodule.Movement.RegisterAnimPacket("example_pistol", pkt)
--- self.CurAnimPacket = "example_pistol"
--- gs_aimodule.Movement.SetActivity(self, ACT_IDLE, true)
+
 
 
 gs_aimodule = gs_aimodule or {}
@@ -33,7 +20,8 @@ gStory_Anim_None = {
         [ACT_WALK] = ACT_HL2MP_WALK,
         [ACT_RUN] = ACT_HL2MP_RUN,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH,
+        [ACT_JUMP] = ACT_HL2MP_JUMP
     },
     npc = {
         [ACT_IDLE] = ACT_IDLE,
@@ -51,7 +39,8 @@ gStory_Anim_Pistol = {
         [ACT_WALK] = ACT_HL2MP_WALK_PISTOL,
         [ACT_RUN] = ACT_HL2MP_RUN_PISTOL,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH_PISTOL,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_PISTOL
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_PISTOL,
+        [ACT_JUMP] = ACT_HL2MP_JUMP_PISTOL
     },
     npc = {
         [ACT_IDLE] = ACT_IDLE_ANGRY_PISTOL,
@@ -69,7 +58,8 @@ gStory_Anim_Revolver = {
         [ACT_WALK] = ACT_HL2MP_WALK_REVOLVER,
         [ACT_RUN] = ACT_HL2MP_RUN_REVOLVER,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH_REVOLVER,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_REVOLVER
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_REVOLVER,
+        [ACT_JUMP] = ACT_HL2MP_JUMP_REVOLVER
     },
     NPC = gStory_Anim_Pistol.npc
 }
@@ -81,7 +71,8 @@ gStory_Anim_Duel = {
         [ACT_WALK] = ACT_HL2MP_WALK_DUEL,
         [ACT_RUN] = ACT_HL2MP_RUN_DUEL,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH_DUEL or ACT_HL2MP_IDLE_CROUCH,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_DUEL or ACT_HL2MP_WALK_CROUCH
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_DUEL or ACT_HL2MP_WALK_CROUCH,
+        [ACT_JUMP] = ACT_HL2MP_JUMP_DUEL
     },
     npc = gStory_Anim_None.npc
 }
@@ -93,7 +84,8 @@ gStory_Anim_SMG = {
         [ACT_WALK] = ACT_HL2MP_WALK_SMG1,
         [ACT_RUN] = ACT_HL2MP_RUN_SMG1,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH_SMG1,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_SMG1
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_SMG1,
+        [ACT_JUMP] = ACT_HL2MP_JUMP_SMG1
     },
     npc = {
         [ACT_IDLE] = ACT_IDLE_SMG1_STIMULATED,
@@ -111,7 +103,8 @@ gStory_Anim_AR2 = {
         [ACT_WALK] = ACT_HL2MP_WALK_AR2,
         [ACT_RUN] = ACT_HL2MP_RUN_AR2,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH_AR2 or ACT_HL2MP_IDLE_CROUCH,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_AR2 or ACT_HL2MP_WALK_CROUCH
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_AR2 or ACT_HL2MP_WALK_CROUCH,
+        [ACT_JUMP] = ACT_HL2MP_JUMP_AR2
     },
     npc = {
         [ACT_IDLE] = ACT_IDLE_AIM_RIFLE_STIMULATED,
@@ -129,7 +122,8 @@ gStory_Anim_Shotgun = {
         [ACT_WALK] = ACT_HL2MP_WALK_SHOTGUN,
         [ACT_RUN] = ACT_HL2MP_RUN_SHOTGUN,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH_SHOTGUN or ACT_HL2MP_IDLE_CROUCH,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_SHOTGUN or ACT_HL2MP_WALK_CROUCH
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_SHOTGUN or ACT_HL2MP_WALK_CROUCH,
+        [ACT_JUMP] = ACT_HL2MP_JUMP_SHOTGUN
     },
     npc = {
         [ACT_IDLE] = ACT_IDLE_SHOTGUN_AGITATED,
@@ -147,7 +141,8 @@ gStory_Anim_RPG = {
         [ACT_WALK] = ACT_HL2MP_WALK_RPG,
         [ACT_RUN] = ACT_HL2MP_RUN_RPG,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH_RPG or ACT_HL2MP_IDLE_CROUCH,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_RPG or ACT_HL2MP_WALK_CROUCH
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_RPG or ACT_HL2MP_WALK_CROUCH,
+        [ACT_JUMP] = ACT_HL2MP_JUMP_RPG
     },
     npc = {
         [ACT_IDLE] = ACT_IDLE_ANGRY_RPG,
@@ -155,6 +150,7 @@ gStory_Anim_RPG = {
         [ACT_RUN] = ACT_RUN_RPG,
         [ACT_CROUCHIDLE] = ACT_CROUCHIDLE_AIM_STIMULATED,
         [ACT_WALK_CROUCH] = ACT_WALK_CROUCH_RPG
+
     }
 }
 
@@ -165,7 +161,8 @@ gStory_Anim_Physgun = {
         [ACT_WALK] = ACT_HL2MP_WALK_PHYSGUN,
         [ACT_RUN] = ACT_HL2MP_RUN_PHYSGUN,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH_PHYSGUN or ACT_HL2MP_IDLE_CROUCH,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_PHYSGUN or ACT_HL2MP_WALK_CROUCH
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_PHYSGUN or ACT_HL2MP_WALK_CROUCH,
+        [ACT_JUMP] = ACT_HL2MP_JUMP_PHYSGUN
     },
     npc = gStory_Anim_None.npc
 }
@@ -177,7 +174,8 @@ gStory_Anim_Crossbow = {
         [ACT_WALK] = ACT_HL2MP_WALK_CROSSBOW,
         [ACT_RUN] = ACT_HL2MP_RUN_CROSSBOW,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH_CROSSBOW or ACT_HL2MP_IDLE_CROUCH,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_CROSSBOW or ACT_HL2MP_WALK_CROUCH
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_CROSSBOW or ACT_HL2MP_WALK_CROUCH,
+        [ACT_JUMP] = ACT_HL2MP_JUMP_CROSSBOW
     },
     npc = gStory_Anim_AR2.npc
 }
@@ -189,7 +187,8 @@ gStory_Anim_Camera = {
         [ACT_WALK] = ACT_HL2MP_WALK_CAMERA,
         [ACT_RUN] = ACT_HL2MP_RUN_CAMERA,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH_CAMERA or ACT_HL2MP_IDLE_CROUCH,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_CAMERA or ACT_HL2MP_WALK_CROUCH
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_CAMERA or ACT_HL2MP_WALK_CROUCH,
+        [ACT_JUMP] = ACT_HL2MP_JUMP_CAMERA
     },
     npc = gStory_Anim_None.npc
 }
@@ -201,7 +200,8 @@ gStory_Anim_SLAM = {
         [ACT_WALK] = ACT_HL2MP_WALK_SLAM,
         [ACT_RUN] = ACT_HL2MP_RUN_SLAM,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH_SLAM or ACT_HL2MP_IDLE_CROUCH,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_SLAM or ACT_HL2MP_WALK_CROUCH
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_SLAM or ACT_HL2MP_WALK_CROUCH,
+        [ACT_JUMP] = ACT_HL2MP_JUMP_SLAM
     },
     npc = gStory_Anim_None.npc
 }
@@ -213,7 +213,8 @@ gStory_Anim_Grenade = {
         [ACT_WALK] = ACT_HL2MP_WALK_GRENADE,
         [ACT_RUN] = ACT_HL2MP_RUN_GRENADE,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH_GRENADE or ACT_HL2MP_IDLE_CROUCH,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_GRENADE or ACT_HL2MP_WALK_CROUCH
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_GRENADE or ACT_HL2MP_WALK_CROUCH,
+        [ACT_JUMP] = ACT_HL2MP_JUMP_GRENADE
     },
     npc = gStory_Anim_None.npc
 }
@@ -225,7 +226,8 @@ gStory_Anim_Melee = {
         [ACT_WALK] = ACT_HL2MP_WALK_MELEE,
         [ACT_RUN] = ACT_HL2MP_RUN_MELEE,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH_MELEE or ACT_HL2MP_IDLE_CROUCH,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_MELEE or ACT_HL2MP_WALK_CROUCH
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_MELEE or ACT_HL2MP_WALK_CROUCH,
+        [ACT_JUMP] = ACT_HL2MP_JUMP_MELEE
     },
     npc = {
         [ACT_IDLE] = ACT_IDLE_MELEE,
@@ -243,7 +245,8 @@ gStory_Anim_Melee2 = {
         [ACT_WALK] = ACT_HL2MP_WALK_MELEE2,
         [ACT_RUN] = ACT_HL2MP_RUN_MELEE2,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH_MELEE2 or ACT_HL2MP_IDLE_CROUCH,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_MELEE2 or ACT_HL2MP_WALK_CROUCH
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_MELEE2 or ACT_HL2MP_WALK_CROUCH,
+        [ACT_JUMP] = ACT_HL2MP_JUMP_MELEE2
     },
     npc = gStory_Anim_None.npc
 }
@@ -255,7 +258,8 @@ gStory_Anim_Knife = {
         [ACT_WALK] = ACT_HL2MP_WALK_KNIFE,
         [ACT_RUN] = ACT_HL2MP_RUN_KNIFE,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH_KNIFE or ACT_HL2MP_IDLE_CROUCH,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_KNIFE or ACT_HL2MP_WALK_CROUCH
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_KNIFE or ACT_HL2MP_WALK_CROUCH,
+        [ACT_JUMP] = ACT_HL2MP_JUMP_KNIFE
     },
     npc = gStory_Anim_Melee
 }
@@ -267,7 +271,8 @@ gStory_Anim_Fist = {
         [ACT_WALK] = ACT_HL2MP_WALK_FIST,
         [ACT_RUN] = ACT_HL2MP_RUN_FIST,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH_FIST or ACT_HL2MP_IDLE_CROUCH,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_FIST or ACT_HL2MP_WALK_CROUCH
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_FIST or ACT_HL2MP_WALK_CROUCH,
+        [ACT_JUMP] = ACT_HL2MP_JUMP_FIST
     },
     npc = gStory_Anim_None.npc
 }
@@ -279,7 +284,8 @@ gStory_Anim_Passive = {
         [ACT_WALK] = ACT_HL2MP_WALK_PASSIVE,
         [ACT_RUN] = ACT_HL2MP_RUN_PASSIVE,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH_PASSIVE or ACT_HL2MP_IDLE_CROUCH,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_PASSIVE or ACT_HL2MP_WALK_CROUCH
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_PASSIVE or ACT_HL2MP_WALK_CROUCH,
+        [ACT_JUMP] = ACT_HL2MP_JUMP_PASSIVE
     },
     npc = gStory_Anim_None.npc
 }
@@ -291,7 +297,8 @@ gStory_Anim_Magic = {
         [ACT_WALK] = ACT_HL2MP_WALK_MAGIC,
         [ACT_RUN] = ACT_HL2MP_RUN_MAGIC,
         [ACT_CROUCHIDLE] = ACT_HL2MP_IDLE_CROUCH_MAGIC or ACT_HL2MP_IDLE_CROUCH,
-        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_MAGIC or ACT_HL2MP_WALK_CROUCH
+        [ACT_WALK_CROUCH] = ACT_HL2MP_WALK_CROUCH_MAGIC or ACT_HL2MP_WALK_CROUCH,
+        [ACT_JUMP] = ACT_HL2MP_JUMP_MAGIC
     },
     npc = gStory_Anim_None.npc
 }
@@ -379,6 +386,8 @@ function Movement.MapCAToMotion(self)
 end 
 
 local function ResolveAnimPacket( self, centralActivity, branch )
+
+
     local animPacketSet = self.AnimPacketSet or gStory_HoldTypeToAnim
     local curAnimPacket = self.CurAnimPacket or "none"
     local animPacket = animPacketSet[ curAnimPacket ] or gStory_HoldTypeToAnim[ curAnimPacket ]
@@ -391,9 +400,9 @@ local function ResolveAnimPacket( self, centralActivity, branch )
     end 
 
     if not anim then 
-        local packetSetStr = tostring( animPacketSet or gStory_HoldTypeToAnim )
-        local animPacketStr = tostring( animPacket )
-        local WarnMsg = string.format("Central act enumerated %d wasn't found in animation packet %s in the following animation packet set: %s", centralActivity, animPacketStr, packetSetStr)
+        local packetSetStr = table.ToString( animPacketSet or gStory_HoldTypeToAnim )
+        local animPacketStr =  table.ToString(animPacket) 
+        local WarnMsg = string.format("Central act enumerated %d wasn't found in animation packet %s on branch %s in the following animation packet set: %s", centralActivity, animPacketStr, branch, packetSetStr)
         gs_aimodule.Warn( WarnMsg )
 
         return gStory_HoldTypeToAnim[ curAnimPacket ][ branch ][ centralActivity ]
@@ -405,6 +414,7 @@ end
 
 -- Central activity setter that supports packets by name or by table
 function Movement.SetActivity(self, centralActivity, isPlayer, packet)
+
     local branch = isPlayer and "ply" or "npc"
     local act 
 
@@ -497,23 +507,14 @@ function Movement.AimAtVector( self, pos )
 
     -- Aim from the weapon muzzle position, fallback to center
     local aimOrigin = self:WorldSpaceCenter()
-    /*
-    if IsValid(self.Weapon) then
-        local muzzleId = self.Weapon:LookupAttachment("muzzle")
-        if muzzleId > 0 then
-            local muzzleAtt = self.Weapon:GetAttachment(muzzleId)
-            if muzzleAtt then
-                aimOrigin = muzzleAtt.Pos
-            end
-        end
-    end
-    */
+
     
     local dirVector = (pos - aimOrigin)
     local targetAngles = dirVector:Angle()
 
    
     local myAngles = self:GetAngles()
+
 
     
     local diff = targetAngles - myAngles
@@ -566,6 +567,14 @@ function Movement.AimAtVectorByDegree( self, pos, speed )
         self:SetPoseParameter("aim_pitch", diff.p)
     end
  
+
+end 
+
+function Movement.Jump( self )
+    local branch = self.IsPlayer and "ply" or "npc"
+    local anim = ResolveAnimPacket( self, ACT_JUMP, branch )
+
+    self.loco:Jump( anim )
 
 end 
 

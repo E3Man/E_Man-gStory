@@ -1,8 +1,17 @@
 -- =====================================================
--- gStory AI Module (consolidated)
+-- gStory AI Module 
 -- All gs_aimodule functions and branches centralized here.
 -- Sections: Utilities, Task system, Movement (Anim Packets + funcs), AI init, Weapon & Inventory
 -- =====================================================
+
+function makeSet(list)
+   
+    local set = {}
+    for _, value in pairs(list) do
+        set[value] = true
+    end
+    return set
+end
 
 gs_aimodule = {}
 gs_aimodule.nextbots = {}
@@ -114,8 +123,8 @@ function gs_aimodule.InitializeAI(self)
     self:PhysicsInitShadow( true, true )
     self:PhysWake()
 
-    local min = Vector(-50, -50, -50)
-    local max = Vector(50, 50, 50)
+    local min = Vector(-16, -16, 0)
+    local max = Vector(16, 16, 72)
 
     self:SetCollisionBounds(min, max)
  
@@ -147,6 +156,7 @@ function gs_aimodule.InitializeAI(self)
 
     self.Enemies = {}
     self.EnemiesSet = {}
+    self.SightedEntities = {}
 
     gs_aimodule.Movement.ApplyMotionStats( self, self.InitialMotionStats )
 
@@ -602,3 +612,47 @@ function gs_aimodule.RemoveRemoveCallback(self, entOrIndex, id)
     return true
 end 
 
+function gs_aimodule.ConeOfSight(self)
+    local eyes = self:EyePos()
+   
+    local fovtorad = math.rad(self.FOV)
+
+    local forward = self:GetForward() * self.SightDistance
+
+    local sightTable = ents.FindInCone( eyes, forward, self.SightDistance, fovtorad )
+
+    return makeSet(sightTable)
+end 
+
+function gs_aimodule.PVSOfSight(self)
+    return makeSet(ents.FindInPVS(self))
+end 
+
+function gs_aimodule.UpdateSightList(self)
+    local previousSighted = self.SightedEntities -- Entities from last check
+    local currentSight = gs_aimodule.ConeOfSight(self) -- Current entities in sight
+
+    -- Step 1: Detect newly sighted entities
+    for ent, _ in pairs(currentSight) do 
+        if previousSighted[ent] then 
+            
+            previousSighted[ent] = nil 
+            continue 
+        end 
+        
+        
+        if IsValid(ent) then
+            self:Internal_OnEntitySight(ent)
+        end
+    end 
+
+    -- Step 2: Remaining entities in previousSighted are the ones we just lost sight of
+    for ent, _ in pairs(previousSighted) do 
+        if IsValid(ent) then
+            self:Internal_OnEntitySightLost(ent)
+        end
+    end 
+
+    
+    self.SightedEntities = currentSight 
+end

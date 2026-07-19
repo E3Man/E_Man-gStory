@@ -64,34 +64,37 @@ local function distSqr(self, ent)
     return dist 
 end 
 
-Tasks["EBot_ProtectMaster"] = {
+Tasks["TacticalAI_FollowLeader"] = {
     ["RunBehaviour"] = function(self)
-        if not IsValid(self.Master) then return end 
-        local distSqr = distSqr(self, self.Master)
+        if not IsValid(self.Leader) then return end 
+        local distSqr = distSqr(self, self.Leader)
         if distSqr <= 700^2 then return end 
+
+        if distSqr > 3000^2 then 
+        gs_aimodule.Movement.SetActivity( self, ACT_RUN, true )
+        else 
         gs_aimodule.Movement.SetActivity( self, ACT_WALK, true )
-        self:ChaseEntity( self.Master, {tolerance = 80, lookahead = math.random(100, 1000)} )
+        end 
+        self:ChaseEntity( self.Leader, {tolerance = 80, lookahead = 200} )
         gs_aimodule.Movement.SetActivity( self, ACT_IDLE, true )
     end,
     ["Think"] = function(self) 
         if self.CurEnemy then return end 
-        gs_aimodule.PerformActionWithCooldown(self, "Turn", 2, function(self, inCooldown)
-            if inCooldown then return end 
-            local origin = self:GetPos()
-            self.TurnVector =  origin + Vector(  math.random(), math.random(),  math.random())  * self:GetForward()
+    gs_aimodule.PerformActionWithCooldown(self, "UpdateTurnTarget", math.random(4, 7), function(self, inCooldown)
+        if inCooldown then return end 
+        
+        local fwd = self:GetForward()
+        local right = self:GetRight()
+        
 
-
-
-   
-           
-        end )
+        local horizontalOffset = (math.random() * 2 - 1) * 1.5
+        local verticalOffset = (math.random() * 0.4 - 0.2) 
+        
+       
+        self.TurnVector = self:GetPos() + (fwd + (right * horizontalOffset) + (Vector(0,0,1) * verticalOffset)) * 100
+    end)
         gs_aimodule.Movement.AimAtVectorByDegree(self, self.TurnVector, math.random(1, 3) )
-    end,
-    ["OnSetEnemy"] = function(self, ent) 
-        if not IsValid(ent) then return end 
-
-        Task.AddTask( self, "EBot_DogFight" )
-    end 
+    end
 }
 
 

@@ -56,3 +56,11 @@ hook.Add("PlayerSpawn", "GS_SetPlayerMovementSpeed", function(ply)
         ply:SetRunSpeed(gs_aimodule.GenericRunSpeed)
     end)
 end )
+
+local rawdmginfo = DamageInfo()
+
+hook.Add("OnEntityWaterLevelChanged", "GS_InstantDrown", function(ent)
+    if ent.GS_AI and ent.CanInstaDrown then 
+        ent:OnKilled( rawdmginfo )
+    end 
+end )

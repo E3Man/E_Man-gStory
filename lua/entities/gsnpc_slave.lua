@@ -30,9 +30,8 @@ ENT.Inventory = {}                 -- Additional weapons to put in the NPC's inv
 ENT.Faction = "FACTION_MINGEBAGS"         -- Faction the NPC belongs to
 ENT.Attitude = D_HT                      -- Default attitude of the NPC towards other NPCs
 ENT.UseLineOfSight = true                -- Whether the NPC needs line of sight to detect enemies
-ENT.SightDistance = 7000                 -- Maximum distance at which the NPC can see enemies
-ENT.HearingDistance = 1000               -- Maximum distance at which the NPC can hear enemies
-ENT.FOV = 180   
+
+
 
 ENT.InitialMaxHealth = 80
 ENT.InitialHealth = 80
@@ -41,8 +40,7 @@ ENT.MeleeAttackCooldown = 0.8
 
 ENT.RangedAttackRange = 2000
 
-ENT.PreferredCombatTask = "FodderAI_MeatShield"
-ENT.PreferredIdleTask   = "TacticalAI_Patrol"
+
 
 ENT.InitialMotionStats = {
     speed = 300
@@ -51,7 +49,7 @@ ENT.InitialMotionStats = {
 ENT.PreferredCombatTask = "FodderAI_MeatShield"
 ENT.PreferredIdleTask   = "TacticalAI_Idle"
 
-ENT.InitialTasks = { {name = "EnemyManagement_Sight"}, {name = "TacticalAI_Patrol"}, {name = "AI_ShootEnemy"} }
+ENT.InitialTasks = { {name = "EnemyManagement_Sight"}, {name = "TacticalAI_Idle"}, {name = "AI_ShootEnemy"} }
 
 local function MelonHead(ent)
     if not IsValid(ent) then return end

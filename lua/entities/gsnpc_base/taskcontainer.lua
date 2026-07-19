@@ -67,6 +67,19 @@ local hasEnemyMotionOptions = {
 -- ============================================================================
 -- SENSORIAL TASKS
 -- ============================================================================
+
+local function SightUpdateFunc(self, inCooldown)
+    if inCooldown then  return end 
+    gs_aimodule.UpdateSightList(self)
+
+end
+
+Tasks["SensoryAI_SightSystem"] = {
+    ["Think"] = function(self)
+        gs_aimodule.PerformActionWithCooldown(self, "UpdateSight", 0.3,  SightUpdateFunc)
+    end 
+}
+
 Tasks["SensoryAI_PanicOnOtherKilled"] = {
     ["OnOtherKilled"] = function(self, ent)
         if Factions.GetDisposition(self, ent) ~= D_LI then return end 
@@ -116,7 +129,7 @@ Tasks["SensoryAI_FlagIdle"] = {
     ["PreTaskInitialization"] = function(self, task)
         if self.IsIdle then return end 
 
-        print(task)
+    
 
         local preferred = self.PreferredIdleTask
         if istable(preferred) then
@@ -125,10 +138,7 @@ Tasks["SensoryAI_FlagIdle"] = {
             self.IsIdle = task == preferred 
         end 
 
-        print(self.IsIdle)
-        if not self.IsIdle then return end 
 
-        print("Yo im idle now")
 
 
     end,
@@ -142,10 +152,17 @@ Tasks["SensoryAI_FlagIdle"] = {
             self.IsIdle = task == preferred 
         end 
 
-        print("I aint idle now")
+      
     
     end,
-    Priority = 50
+    Priority = 100
+}
+
+Tasks["SensoryAI_ResumeAnimOnLand"] = {
+    ["OnLandOnGround"] = function(self, ent)
+        gs_aimodule.Movement.SetActivity(self, self.CentralActivity, true)
+
+    end 
 }
 
 -- ============================================================================
@@ -391,6 +408,18 @@ Tasks["TacticalAI_SniperCamp"] = {
     end 
 }
 
+local function NextbotHop(self, inCooldown)
+    if inCooldown then return end
+    gs_aimodule.Movement.Jump(self)
+end 
+
+Tasks["TacticalAI_SpamHop"] = {
+    ["Think"] = function(self)
+        if self.IsMoving then 
+            gs_aimodule.PerformActionWithCooldown( self, "FightHop", math.random(2, 4), NextbotHop )
+        end 
+    end 
+}
 
 
 -- Shooting Task - Generic ranged attack behavior
@@ -766,6 +795,12 @@ Tasks["TacticalAI_Strafe"] = {
         if distToEnemy > switchDistance then
             Task.AddTask(self, "TacticalAI_Push")
         end
+
+        if math.random(1,10) == 1 then 
+            if not self:IsAbleToSee( self.CurEnemy ) then 
+                Task.AddTask(self, "TacticalAI_Push")
+            end 
+        end 
     end, 
     ["OnTaskTermination"] = function(self)
         gs_aimodule.Movement.SetActivity(self, ACT_IDLE, true)
@@ -813,6 +848,13 @@ Tasks["TacticalAI_CircularStrafe"] = {
 
         if distToEnemy > switchDistance or (self:Visible(self.CurEnemy) and distToEnemy > (switchDistance / 2)) then
             Task.AddTask(self, "TacticalAI_Push")
+        end
+
+        
+        if math.random(1,10) == 1 then 
+            if not self:IsAbleToSee( self.CurEnemy ) then 
+                Task.AddTask(self, "TacticalAI_Push")
+            end 
         end
     end 
 }

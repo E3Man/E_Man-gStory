@@ -31,9 +31,8 @@ ENT.Inventory = {"gswep_smg1"}                 -- Additional weapons to put in t
 ENT.Faction = "FACTION_MINGEBAGS"         -- Faction the NPC belongs to
 ENT.Attitude = D_HT                      -- Default attitude of the NPC towards other NPCs
 ENT.UseLineOfSight = true                -- Whether the NPC needs line of sight to detect enemies
-ENT.SightDistance = 7000                 -- Maximum distance at which the NPC can see enemies
-ENT.HearingDistance = 1000               -- Maximum distance at which the NPC can hear enemies
-ENT.FOV = 180   
+
+
 
 ENT.InitialMaxHealth = 100
 ENT.InitialHealth = 100

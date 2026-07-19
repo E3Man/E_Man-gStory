@@ -76,7 +76,7 @@ local function ThrowMelon( owner )
     melon:SetModel( melonmodel )
     
     
-    melon:SetPos( owner:WorldSpaceCenter() + owner:GetForward() * 80 )
+    melon:SetPos( owner:WorldSpaceCenter() + owner:GetForward() * 95 )
 
     melon:Spawn()
 
@@ -84,8 +84,8 @@ local function ThrowMelon( owner )
 
     physObj:ApplyForceCenter( toEnemy * 10e+8 )
 
-    timer.Simple(3, function()
-        if IsValid(monitor) then 
+    timer.Simple(5, function()
+        if IsValid(melon) then 
             melon:Remove() 
         end 
     end )
@@ -102,31 +102,11 @@ function SWEP:GSWEP_PrimaryAttack()
     
 end
 
-function SWEP:GSWEP_SecondaryAttack() end 
 
-function SWEP:GSWEP_FireBullet(bulletConfig) end 
-
-function SWEP:GSWEP_Initialize() 
-
-end 
 
 function SWEP:GSWEP_CanPrimaryAttack() 
     return true 
 end 
-
-function SWEP:GSWEP_CanSecondaryAttack() 
-    return true 
-end 
-
-function SWEP:GSWEP_Think() end 
-
-function SWEP:GSWEP_ReloadPrimary() 
-
-end 
-
-function SWEP:GSWEP_ReloadSecondary() end 
-
-
 
 
 
