@@ -1,6 +1,10 @@
+
 gs_aimodule = gs_aimodule or {}
 
+include( "autorun/gs_aimodule/module.lua" )
+
 include("autorun/sv_gstory_convars.lua")
+
 
 /*
 
@@ -28,6 +32,7 @@ This is a love letter to the community. This was written in 17/12/2025. Thank yo
 
 hook.Add("PlayerSpawn", "GS_PlayerFaction", function(ply)
     ply.Faction = "FACTION_GMOD"
+    ply.GS_Detectable = true
 end )
 
 hook.Add( "PlayerCanPickupWeapon", "GS_AntiGSWEPPickup", function( ply, weapon )

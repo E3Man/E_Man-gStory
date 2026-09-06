@@ -29,6 +29,9 @@ SWEP.HoldType = "smg"
 SWEP.PrimaryCooldown = 0.2
 SWEP.SecondaryCooldown = 0.2  
 
+SWEP.PrimaryShoots = true 
+SWEP.PrimaryWastesAmmo = true 
+
 SWEP.Primary.BulletConfig = {
     Damage      = 10,
     Force       = 5,
@@ -151,7 +154,8 @@ function SWEP:Initialize()
 end 
 
 function SWEP:PrimaryAttack()
-    if not self:GS_IsPrimaryReady() then return end 
+    if not self:GS_IsPrimaryReady()  then return end 
+    if not self.Primary.CanShoot then return end 
 
     if not ( self:GSWEP_CanPrimaryAttack()) then 
         return 
@@ -166,10 +170,19 @@ function SWEP:PrimaryAttack()
 
     self:GSWEP_PrimaryAttack()
 
+    if self:GS_GetClip1() > 0 and self.PrimaryWastesAmmo then 
+        self:GS_TakeFromClip1(1)
+    end 
+
     local delay = self.PrimaryCooldown or 0.1
     self:SetNextPrimaryFire( CurTime() + delay )
 
-    if not self.Primary.CanShoot then return end 
+    if not (self.PrimaryShoots) then return end  
+
+
+
+
+
 
     local config = self.Primary.BulletConfig or {}
     local bullet = {
@@ -190,9 +203,7 @@ function SWEP:PrimaryAttack()
     self:FireBullets(bullet)
     self:EmitSound( config.ShootSound or "Weapon_Pistol.Single" )
     
-    if self:GS_GetClip1() > 0 then 
-        self:GS_TakeFromClip1(1)
-    end 
+
     
 
 end

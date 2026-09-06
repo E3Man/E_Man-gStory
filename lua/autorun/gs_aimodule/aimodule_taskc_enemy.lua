@@ -6,7 +6,6 @@ local Factions = gs_aimodule.Factions
 Tasks[ "EnemyManagement_Sight" ] = {
     ["OnEntitySight"] = function(self, ent)
         if not (ent.GS_Detectable) then return end 
-     
 
     
 

@@ -2,8 +2,10 @@ gs_aimodule = gs_aimodule or {}
 gs_aimodule.Task = gs_aimodule.Task or {}
 
 local Task  = gs_aimodule.Task 
+Task.Tasks = Task.Tasks or {}
 local Tasks = Task.Tasks 
 
+gs_aimodule.Factions = gs_aimodule.Factions or {}
 local Factions = gs_aimodule.Factions 
 
 -- ============================================================================
@@ -142,7 +144,7 @@ Tasks["SensoryAI_FlagIdle"] = {
 
 
     end,
-    ["TaskRemoval"] = function(self, task)
+    ["PostTaskRemoval"] = function(self, task)
         if not self.IsIdle then return end 
 
         local preferred = self.PreferredIdleTask
@@ -271,8 +273,10 @@ Tasks["TacticalAI_Patrol"] = {
     ["OnTaskInitialization"] = function(self)
         self.PatrolStartPos = self:GetPos()
         self.NextPatrolPoint = nil
+
     end,
     ["RunBehaviour"] = function(self)
+
         coroutine.wait(0.3)
 
         if not IsValid(self.NextPatrolPoint) then
@@ -294,6 +298,7 @@ Tasks["TacticalAI_Patrol"] = {
         gs_aimodule.Movement.SetActivity(self, ACT_IDLE, true)
     end,
     ["Think"] = function(self)
+    
         if self.CurEnemy then return end
         
         -- Check if we've reached the patrol point
@@ -346,6 +351,7 @@ Tasks["TacticalAI_DogFight"] = {
 
 Tasks["TacticalAI_SneakyRush"] = {
     ["RunBehaviour"] = function(self)
+    
     local enemy = self.CurEnemy 
     if not IsValid(enemy) then return end 
 
@@ -500,7 +506,7 @@ Tasks["FodderAI_MeatShield"] = {
 }
 
 
--- Flanker Task - Movimientos tácticos de flanqueo por los lados
+-- Flanker Task - Movimientos tÃ¡cticos de flanqueo por los lados
 Tasks["FodderAI_Flanker"] = {
     ["RunBehaviour"] = function(self)
         if not IsValid(self.CurEnemy) then return end 
@@ -929,4 +935,3 @@ Tasks["AI_GoalTaskManager"] = {
             gs_aimodule.AddTask(self, "AI_GoToGoal") 
     end
 }
-

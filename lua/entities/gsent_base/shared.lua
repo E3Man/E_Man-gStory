@@ -5,4 +5,3 @@ ENT.Author = "E_Man"
 ENT.Category = "gStory (Entities)"  
 ENT.Purpose = "To not hardcode everything"
 ENT.Spawnable = true 
-

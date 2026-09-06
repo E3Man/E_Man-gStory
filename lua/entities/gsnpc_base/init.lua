@@ -1,10 +1,7 @@
 AddCSLuaFile()
 
-include( "entities/gsnpc_base/gsmodule.lua" )
 include( "entities/gsnpc_base/pathfind.lua" )
 include( "entities/gsnpc_base/shared.lua" )
-
-local Task = gs_aimodule.Task
 
 /*
 ---------------------------------------------------------------------
@@ -14,6 +11,18 @@ local Task = gs_aimodule.Task
 /*--------------------------------------------------------------------
 -- ATTRIBUTES
 */
+
+
+include("entities/gsnpc_base/attributes.lua")
+
+
+local Task = gs_aimodule and gs_aimodule.Task
+
+if not Task then
+    gs_aimodule = gs_aimodule or {}
+    gs_aimodule.Task = gs_aimodule.Task or {}
+    Task = gs_aimodule.Task
+end
 
 ENT.GS_AI = true 
 ENT.GS_Detectable = true
@@ -73,6 +82,8 @@ ENT.IsPlayer = true -- If it uses playermodel models
 
 ENT.CanInstaDrown = true
 
+ENT.ModelScale = 1
+
 /*--------------------------------------------------------------------
 -- CUSTOM HOOKS
 
@@ -125,10 +136,16 @@ function ENT:GSAI_PreTaskInitialization( task ) end
 
 function ENT:GSAI_PostTaskInitialization( task ) end 
 
-function ENT:GSAI_TaskRemoval( task ) end 
+function ENT:GSAI_PreTaskRemoval( task ) end 
+
+function ENT:GSAI_PostTaskRemoval( task ) end 
 
 function ENT:GSAI_OnLandOnGround( ent ) end 
   
+function ENT:GSAI_PreNewState(oldTask, newTask, stateFlag) end 
+
+function ENT:GSAI_PostNewState(oldTask, newTask, stateFlag) end 
+
 /*--------------------------------------------------------------------
 -- HOOKS
 */
@@ -201,6 +218,7 @@ end
 function ENT:RunBehaviour()
     while true do 
         if self.CoroutineInterrupted then coroutine.yield() continue end 
+
         Task.CallHookFromTask( self, "RunBehaviour" )
      
         coroutine.wait(0.15)
@@ -253,9 +271,14 @@ function ENT:PreTaskInitialization( task )
     Task.CallHookFromTask( self, "PreTaskInitialization", task )
 end 
 
-function ENT:TaskRemoval(task)
-    self:GSAI_TaskRemoval(task)
-    Task.CallHookFromTask(self, "TaskRemoval", task)
+function ENT:PreTaskRemoval(task)
+    self:GSAI_PreTaskRemoval(task)
+    Task.CallHookFromTask(self, "PreTaskRemoval", task)
+end 
+
+function ENT:PostTaskRemoval(task)
+    self:GSAI_PostTaskRemoval(task)
+    Task.CallHookFromTask(self, "PostTaskRemoval", task)
 end 
 
 function ENT:OnLandOnGround(ent)
@@ -328,3 +351,13 @@ function ENT:EyePos()
 
     return self:GetPos() + Vector(0, 0, 48) + (self:GetForward() * 10)
 end
+
+function ENT:PreNewState(oldTask, newTask, stateFlag) 
+    self:GSENT_PreNewState( oldTask, newTask, stateFlag )
+    Task.CallHookFromTask( self, "PreNewState", oldTask, newTask, stateFlag )
+end 
+
+function ENT:PostNewState(oldTask, newTask, stateFlag) 
+    self:GSENT_PostNewState( oldTask, newTask, stateFlag )
+    Task.CallHookFromTask( self, "PostNewState", oldTask, newTask, stateFlag )
+end 

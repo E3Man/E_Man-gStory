@@ -1,6 +1,6 @@
-SWEP.PrintName      = "[gStory] Melon Launch" 
+SWEP.PrintName      = "[gStory] GBomber" 
 SWEP.Author         = "E_Man" 
-SWEP.Instructions   = "Who knew melons could be such effective projectiles at high velocities."
+SWEP.Instructions   = "Bombs! We need more bombs!"
 SWEP.Base = "gswep_base"
 SWEP.Spawnable      = false 
 
@@ -8,30 +8,30 @@ SWEP.Spawnable      = false
 --- ATTRIBUTES
 */ -----------------------------------------------------
 
-SWEP.WorldModel = ""
+SWEP.WorldModel = "models/weapons/w_rocket_launcher.mdl"
 
-SWEP.ReloadTime = 2
+SWEP.ReloadTime = 6
 
 SWEP.Primary.Automatic = true 
 SWEP.Secondary.Automatic = false
 
-SWEP.Primary.CanShoot = true
+SWEP.Primary.CanShoot = true 
 SWEP.Secondary.CanShoot = false 
 
-SWEP.MaxClip1Size = 45
+SWEP.MaxClip1Size = 6
 SWEP.MaxClip2Size = 0 
 
-SWEP.DefaultClip1 = 45
+SWEP.DefaultClip1 = 6
 SWEP.DefaultClip2 = 0
 
-SWEP.HoldType = "normal" 
-
-SWEP.PrimaryCooldown = 0.3
-SWEP.SecondaryCooldown = 0.2 
+SWEP.HoldType = "rpg" 
 
 SWEP.PrimaryShoots = false
-SWEP.PrimaryWastesAmmo = false 
+SWEP.PrimaryWastesAmmo = true 
 
+
+SWEP.PrimaryCooldown = 0.5
+SWEP.SecondaryCooldown = 0.2 
 
 SWEP.Primary.BulletConfig = {
     Damage      = 4,
@@ -59,10 +59,9 @@ SWEP.Secondary.BulletConfig = {
 --- CUSTOM HOOKS
 */ -----------------------------------------------------
 
-local melonmodel =  "models/props_junk/watermelon01.mdl"
 
 
-local function ThrowMelon( owner )
+local function ThrowBomb( owner )
     local enemy = owner.CurEnemy 
     if not enemy then return end
     
@@ -71,28 +70,24 @@ local function ThrowMelon( owner )
     
     local toEnemy = enemyPos - ownerPos 
 
-    toEnemy:Normalize()
-
     
 
-    local melon = ents.Create("prop_physics") 
+    local melon = ents.Create("gsent_gbomb") 
     
-    melon:SetModel( melonmodel )
+
     
     
-    melon:SetPos( owner:WorldSpaceCenter() + owner:GetForward() * 95 )
+    melon:SetPos( owner:GetShootPos() + owner:GetForward() * 95 )
 
     melon:Spawn()
 
     local physObj = melon:GetPhysicsObject()
 
-    physObj:ApplyForceCenter( toEnemy * 10e+8 )
+    physObj:SetMass( 20 )
 
-    timer.Simple(5, function()
-        if IsValid(melon) then 
-            melon:Remove() 
-        end 
-    end )
+    physObj:ApplyForceCenter( owner:GetAimVector() * 10e+3 ) 
+
+
 
     
     
@@ -101,8 +96,8 @@ end
 function SWEP:GSWEP_PrimaryAttack()
     local owner = self:GetOwner()
 
-    ThrowMelon(owner) 
-    owner:EmitSound("weapons/physcannon/energy_bounce"..math.random(1,2)..".wav")
+    ThrowBomb(owner) 
+    owner:EmitSound("weapons/grenade_launcher1.wav")
     
 end
 
@@ -112,4 +107,7 @@ function SWEP:GSWEP_CanPrimaryAttack()
     return true 
 end 
 
-
+function SWEP:GSWEP_ReloadPrimary() 
+    self:GS_ReloadPrimary()
+  
+end 

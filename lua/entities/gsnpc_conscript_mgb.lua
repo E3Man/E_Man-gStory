@@ -24,7 +24,7 @@ ENT.Model = "models/player/kleiner.mdl"  -- Model used by the NPC
 ENT.Bodygroup = {}                       -- Bodygroups to set on the model
 
 --- WEAPONS & BACKPACK ---
-ENT.Weapon = {"gswep_m4a1"}         -- Weapon used by the NPC. Will also be put in its inventory
+ENT.Weapon = {"gswep_m4a1", "gswep_gbomber"}         -- Weapon used by the NPC. Will also be put in its inventory
 ENT.Inventory = {}                 -- Additional weapons to put in the NPC's inventory
 
 --- BEHAVIOUR ---

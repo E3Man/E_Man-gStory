@@ -8,4 +8,3 @@ ENT.Author = "E_Man" -- The author's name for this Entity.
 ENT.Category = "gStory" -- The category for this Entity in the spawn menu.
 ENT.Purpose = "gS's Base Nextbot NPC" -- The purpose of this Entity.
 ENT.Spawnable = true -- Specifies whether this Entity can be spawned by players in the spawn menu.
-

@@ -12,6 +12,7 @@ end
 gs_aimodule = gs_aimodule or {}
 gs_aimodule.Movement = gs_aimodule.Movement or {}
 local Movement = gs_aimodule.Movement
+local gs_aimodule = gs_aimodule 
 
 -- Base, used for "normal" hold type
 gStory_Anim_None = {
@@ -421,7 +422,7 @@ function Movement.SetActivity(self, centralActivity, isPlayer, packet)
     if packet then 
         act = packet[ branch ][ centralActivity ]
             if not act then 
-                gs_aimodule.Warn( "Couldn't set activity—Input packet doesn't contain the specified central activity!" ) 
+                gs_aimodule.Warn( "Couldn't set activityâ€”Input packet doesn't contain the specified central activity!" ) 
                 return 
             end 
         self.CentralActivity = centralActivity
@@ -432,7 +433,7 @@ function Movement.SetActivity(self, centralActivity, isPlayer, packet)
     if anim then 
         act = anim 
     else 
-        gs_aimodule.Warn( "Couldn0t set activity—ResolveAnimPacket returned nil!" )
+        gs_aimodule.Warn( "Couldn0t set activityâ€”ResolveAnimPacket returned nil!" )
         return 
     end 
 
@@ -579,7 +580,5 @@ function Movement.Jump( self )
 end 
 
 gs_aimodule.Movement = Movement
-
-
 
 

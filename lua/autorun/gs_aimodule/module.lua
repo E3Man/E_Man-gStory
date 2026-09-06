@@ -1,5 +1,9 @@
+AddCSLuaFile()
+
+
+
 -- =====================================================
--- gStory AI Module 
+-- gStory AI And Entity Module 
 -- All gs_aimodule functions and branches centralized here.
 -- Sections: Utilities, Task system, Movement (Anim Packets + funcs), AI init, Weapon & Inventory
 -- =====================================================
@@ -14,6 +18,8 @@ function makeSet(list)
 end
 
 gs_aimodule = {}
+
+
 gs_aimodule.nextbots = {}
 
 -- -------------------------
@@ -53,11 +59,22 @@ gs_aimodule.GmodderPlayerModels = {
     "models/player/skeleton.mdl" 
 }
 
+if CLIENT then return end
 
 gs_aimodule.GenericRunSpeed = 340
 gs_aimodule.GenericWalkSpeed = 200
 gs_aimodule.GenericCrouchSpeed = 100 
 
+
+include("autorun/gs_aimodule/aimodule_factions.lua")
+include("autorun/gs_aimodule/aimodule_movement.lua")
+include("autorun/gs_aimodule/aimodule_task.lua")
+include("autorun/gs_aimodule/aimodule_taskc_enemy.lua")
+include("autorun/gs_aimodule/aimodule_taskc_enemysorters.lua")
+include("autorun/gs_aimodule/aimodule_taskc_ent.lua")
+include("autorun/gs_aimodule/aimodule_taskc_nb.lua")
+
+local Task = gs_aimodule.Task
 -- -------------------------
 -- Utilities
 -- -------------------------
@@ -70,34 +87,6 @@ function gs_aimodule.ThrowError(err)
     MsgC(Color(220,27,27), "[ gStory AI ] [! ERROR !] " .. tostring(err) .. "\n")
 end
 
--- -------------------------
--- Faction System (split to `factions.lua`)
--- -------------------------
-include("entities/gsnpc_base/factions.lua")
-
--- -------------------------
--- Task system (split to `tasks.lua`)
--- -------------------------
-include("entities/gsnpc_base/tasks.lua")
-
-
-
-
--- -------------------------
--- Movement / Animation packets (split to `movement.lua`)
--- -------------------------
-include("entities/gsnpc_base/movement.lua")
-
--- -------------------------
--- Movement / Animation packets (split to `movement.lua`)
--- -------------------------
-include("entities/gsnpc_base/enemy_sorters.lua")
-
-include("entities/gsnpc_base/attributes.lua")
-
--- Include all NPC init.lua files 
-include("entities/gsnpc_skelly/init.lua")
-include("entities/gsnpc_ebot/init.lua")
 
 function gs_aimodule.RemoveAllRemoveCallbacks(self)
     if not IsValid(self) then return end
@@ -143,7 +132,7 @@ function gs_aimodule.InitializeAI(self)
         mdl(self)
     end 
 
-  
+    self:SetModelScale( self.ModelScale or 1,0 )
 
 
     self:SetFOV(self.FOV)
@@ -185,6 +174,48 @@ function gs_aimodule.InitializeAI(self)
     table.insert( gs_aimodule.nextbots, self )
 
 end
+
+function gs_aimodule.InitializeEntity(self)
+    if not SERVER then return end 
+
+    self:SetModel(self.Model)
+    self:SetModelScale( self.ModelScale or 1,0 )
+
+    if self.InitialMaxHealth or self.InitialHealth then 
+    self:SetMaxHealth( self.InitialMaxHealth or self.InitialHealth )
+    self:SetHealth(self.InitialHealth or self.InitialMaxHealth)
+    end 
+
+    self:PhysicsInit( self.PhysicsSolidType )
+    self:SetMoveType( self.MoveType )
+    self:SetSolid( self.SolidType )
+    local phys = self:GetPhysicsObject() 
+    if phys:IsValid() and self.HasPhysics then 
+        phys:Wake()
+    end
+
+    self.Enemies = {}
+    self.EnemiesSet = {}
+
+    self:SetUseType( self.UseType )
+
+    if self.Mass then 
+        self:SetMass( self.Mass )
+    end 
+
+    for _, task in ipairs(self.InitialTasks) do
+        if isstring(task) then 
+            Task.AddTask(self, task)
+        elseif istable(task) then 
+            local taskName = task.name 
+            local taskArgs = task.args 
+            Task.AddTask(self, taskName, unpack(taskArgs))
+        end 
+    end 
+
+    gs_aimodule.AddRemoveCallback(self, self, "self_cleanup", gs_aimodule.RemoveAllRemoveCallbacks, self) 
+
+end 
 
 -- -------------------------
 -- Weapon & Inventory management
@@ -629,7 +660,7 @@ function gs_aimodule.PVSOfSight(self)
 end 
 
 function gs_aimodule.UpdateSightList(self)
-    local previousSighted = self.SightedEntities -- Entities from last check
+    local previousSighted = self.SightedEntities or {} -- Entities from last check
     local currentSight = gs_aimodule.ConeOfSight(self) -- Current entities in sight
 
     -- Step 1: Detect newly sighted entities

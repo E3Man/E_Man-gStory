@@ -1,9 +1,9 @@
 AddCSLuaFile()
 
 include("entities/gsent_base/shared.lua")
-include("entities/gsent_base/gsent_module.lua")
 
-local Task = gs_entmodule.Task
+
+local Task = gs_aimodule.Task
 
 ENT.GS_ENT = true 
 ENT.GS_Detectable = false 
@@ -90,7 +90,7 @@ function ENT:GSENT_OnForgetEnemy( ent ) end
 
 function ENT:Initialize() 
     self:GSENT_Initialize()
-    gs_entmodule.InitializeEntity(self)
+    gs_aimodule.InitializeEntity(self)
 end
 
 function ENT:Think() 
@@ -145,6 +145,7 @@ function ENT:OnTakeDamage( dmginfo )
     
     self:GSENT_OnTakeDamage( attacker, inflictor, dmginfo )
     Task.CallHookFromTask( self, "OnTakeDamage", attacker, inflictor, dmginfo )
+    Task.CallHookFromTask( self, "OnInjured", attacker, inflictor, dmginfo )
 
     -- Apply the damage to the entity's health
     local currentHealth = self:Health()
@@ -155,7 +156,8 @@ function ENT:OnTakeDamage( dmginfo )
         self:TakePhysicsDamage(dmginfo)
 
 
-    if self:GetMaxHealth() != 0 and self:Health() <= 0 then 
+    if self:GetMaxHealth() != 0 and self:Health() <= 0 and not self.IsDying then 
+        self.IsDying = true 
         self:OnDeath(attacker, inflictor, dmginfo)
         if self.DontDie then return end 
         self:Remove()

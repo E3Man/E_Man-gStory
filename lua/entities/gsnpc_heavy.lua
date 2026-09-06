@@ -43,7 +43,7 @@ ENT.MeleeAttackCooldown = 0.8
 
 --- TASKS --- 
 
-ENT.InitialTasks = { {name = "EnemyManagement_Sight"}, {name = "TacticalAI_Patrol"}, {name = "AI_ShootEnemy"}, {name = "SensoryAI_PanicOnOtherKilled"} }
+ENT.InitialTasks = { {name = "EnemyManagement_Sight"}, {name = "TacticalAI_Patrol"}, {name = "AI_ShootEnemy"}, {name = "SensoryAI_PanicOnOtherKilled"},  {name = "GBomb_ExplosionSequence"} }
 
 ENT.PreferredCombatTask = "TacticalAI_Strafe"
 ENT.PreferredIdleTask = {"TacticalAI_Patrol", "TacticalAI_PatrolChill"}

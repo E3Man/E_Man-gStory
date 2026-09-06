@@ -15,8 +15,12 @@ SWEP.ReloadTime = 2
 SWEP.Primary.Automatic = true 
 SWEP.Secondary.Automatic = false
 
-SWEP.Primary.CanShoot = false
+SWEP.Primary.CanShoot = true 
 SWEP.Secondary.CanShoot = false 
+
+SWEP.PrimaryShoots = false 
+SWEP.PrimaryWastesAmmo = false 
+
 
 SWEP.MaxClip1Size = 45
 SWEP.MaxClip2Size = 0 
@@ -128,8 +132,6 @@ function SWEP:GSWEP_ReloadPrimary()
 end 
 
 function SWEP:GSWEP_ReloadSecondary() end 
-
-
 
 
 

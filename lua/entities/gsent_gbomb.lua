@@ -1,9 +1,9 @@
 ENT.Type = "anim" 
 ENT.Base = "gsent_base" 
-ENT.PrintName = "Dr. Breen Statue Example" 
+ENT.PrintName = "gBomb" 
 ENT.Author = "E_Man" 
 ENT.Category = "gStory (Entities)"  
-ENT.Purpose = "Example usage of tasks and some module functions"
+ENT.Purpose = "A rope bomb that does not even use the rope. Who even designed this?"
 ENT.Spawnable = true 
 
 
@@ -12,31 +12,30 @@ if (CLIENT) then return end
 
 AddCSLuaFile()
 
-local Task = gs_entmodule.Task
+print("The module:", gs_aimodule)
+local Task = gs_aimodule.Task
 local Tasks = Task.Tasks
 
-PrintTable(Tasks)
+
 
 ENT.Faction = "FACTION_GMOD"
 ENT.Attitude = D_HT
 
-ENT.Model = "models/props_trainstation/trashcan_indoor001b.mdl"
-ENT.ModelScale = 2
+ENT.Model = "models/dynamite/dynamite.mdl"
+ENT.ModelScale = 1
 
 ENT.InitialHealth = 100
 ENT.InitialMaxHealth = 100
 
-ENT.HasPhysics = false
+ENT.HasPhysics = true
 
 ENT.SolidType = SOLID_VPHYSICS
-ENT.MoveType = MOVETYPE_NONE
+ENT.MoveType = MOVETYPE_VPHYSICS
 ENT.PhysicsSolidType = SOLID_VPHYSICS
 
-ENT.COVOffset = -80
+ENT.GS_Detectable = false 
 
-ENT.GS_Detectable = true 
-
-ENT.InitialTasks = { "Sensory_SightSystem", "AdminCannon_OnWatch", "EnemyManagement_Sight" }
+ENT.InitialTasks = { "GBomb_ExplosionSequence" }
 
 
 -- ============================================================================
@@ -64,8 +63,6 @@ function ENT:GSENT_PostNewState(oldTask, newTask, stateFlag) end
 function ENT:GSENT_OnTakeDamage(attacker, inflictor, dmginfo) end 
 
 function ENT:GSENT_OnDeath( attacker, inflictor, dmginfo ) 
-self:Dissolve(2)
-self.DontDie = true
 end
 
 function ENT:GSENT_Use(activator, caller, useType, value) end 

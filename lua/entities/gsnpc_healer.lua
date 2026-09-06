@@ -66,5 +66,3 @@ function ENT:GSAI_OnKilled()
 end
 
 
-
-

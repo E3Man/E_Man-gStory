@@ -44,7 +44,7 @@ ENT.BraveryCoefficient = 3
 
 --- TASKS --- 
 
-ENT.InitialTasks = { {name = "EnemyManagement_Sight"}, {name = "TacticalAI_Patrol"}, {name = "AI_ShootEnemy"}, {name = "TacticalAI_SpamHop"} }
+ENT.InitialTasks = { {name = "EnemyManagement_Sight"}, {name = "TacticalAI_Patrol"}, {name = "AI_ShootEnemy"},  {name = "TacticalAI_SpamHop"} }
 
 ENT.PreferredCombatTask = {"FodderAI_Flanker", "TacticalAI_DogFight"}
 

@@ -1,16 +1,17 @@
 
 
-
-
 -- tasks.lua
--- Task system for gs_entmodule
+-- Task system for gs_aimodule
 
-
-gs_entmodule = gs_entmodule or {}
-gs_entmodule.Task = gs_entmodule.Task or {}
-local Task = gs_entmodule.Task
+gs_aimodule = gs_aimodule or {}
+local gs_aimodule = gs_aimodule
+gs_aimodule.Task = gs_aimodule.Task or {}
+local Task = gs_aimodule.Task
 
 Task.Tasks = Task.Tasks or {}
+Task.EssentialTasks = Task.EssentialTasks or {}
+local Tasks = Task.Tasks
+
 
 local function prioritySorting(x, y)
 
@@ -44,16 +45,43 @@ function Task.CallHookFromTask(self, hookName, ...)
     end
 end
 
+local function InterruptCoroutine(self)
+    self.CoroutineInterrupted = true 
+    timer.Simple( 0.1, function() 
+        if IsValid( self ) then 
+            self.CoroutineInterrupted = false 
+        end 
+    end )
+end 
+
+
 
 function Task.AddTask(self, taskName, ...)
-    if not Task.Tasks[taskName] then gs_entmodule.ThrowError( "The task ".. taskName .. " does not exist!" ) return end
+
+    if not Task.Tasks[taskName] then gs_aimodule.ThrowError("The task " .. taskName .. " does not exist!") return end
 
     self.ActiveTasks = self.ActiveTasks or {}
 
     
     local stateFlag = Task.Tasks[ taskName ].StateFlag 
-    
+
     if table.HasValue(self.ActiveTasks, taskName) then return end
+
+    if Task.Tasks[ taskName ] and Task.Tasks[ taskName ].RunBehaviour then 
+        if self.HasTaskWithRunBehaviour then 
+            for taskIndex, taskName in ipairs( self.ActiveTasks ) do 
+                local taskData = Task.Tasks[taskName]
+                if taskData and taskData.RunBehaviour then 
+                    Task.RemoveTask( self, taskName, true )
+                end 
+            end 
+            self.HasTaskWithRunBehaviour = false  -- Clear the flag before setting it again
+        end
+        self.HasTaskWithRunBehaviour = true 
+    end 
+
+
+  
     
     table.insert(self.ActiveTasks, taskName)
     Task.SortTasksByPriority(self)
@@ -64,27 +92,41 @@ function Task.AddTask(self, taskName, ...)
     end
     self:PostTaskInitialization(taskName)
 
-    if stateFlag then 
+    if not stateFlag then return end 
+
+
+
         local oldTask = self["TaskState_" .. tostring(stateFlag)]
         self:PreNewState( oldTask, taskName,  stateFlag)
         Task.RemoveTask( self,  self["TaskState_" .. tostring(stateFlag)] )
         self["TaskState_" .. tostring(stateFlag)] = taskName 
         self:PostNewState( oldTask, taskName,  stateFlag)
-    end 
+
 
 end
 
-function Task.RemoveTask(self, taskName)
+
+
+function Task.RemoveTask(self, taskName, dontClearRunBehaviourFlag)
     if not self.ActiveTasks then return end
+
+    local taskData = Task.Tasks[ taskName ]
+
+    if taskData and taskData.RunBehaviour then  
+        InterruptCoroutine( self )
+        if not dontClearRunBehaviourFlag then 
+        self.HasTaskWithRunBehaviour = false 
+        end 
+    end 
 
     for k, v in ipairs(self.ActiveTasks) do
         if v == taskName then
+            self:PreTaskRemoval(v)
             if Task.Tasks[v].OnTaskTermination then
                 Task.Tasks[v].OnTaskTermination(self)
             end
-            self:PreTaskRemoval(self, taskName)
             table.remove(self.ActiveTasks, k)
-            self:PostTaskRemoval(self, taskName)
+            self:PostTaskRemoval(v)
             break
         end
     end
@@ -96,7 +138,7 @@ end
 
 
 function Task.RunPreferredTaskFor(self, goalName)
-    local taskName = self["Preferred"..(goalName).."Task"]
+    local taskName = self["Preferred"..(goalName or "Idle").."Task"]
 
     if istable(taskName) then 
         taskName = taskName[ math.random(#taskName) ]
@@ -105,5 +147,33 @@ function Task.RunPreferredTaskFor(self, goalName)
     Task.AddTask(self, taskName) 
 end 
 
-include("entities/gsent_base/taskscontainer.lua")
+function Task.RunPIdleOrCombatTask(self)
+    local hasEnemies = not table.IsEmpty(self.Enemies) 
+
+    local goal = hasEnemies and "Combat" or "Idle"
+
+
+    Task.RunPreferredTaskFor(self, goal)
+
+end 
+
+function Task.RunEssentialTasks(self)
+    local tasks = Task.EssentialTasks 
+
+    for _, task in ipairs(tasks) do 
+        Task.AddTask( self, task )
+    end 
+end 
+
+Task.EssentialTasks = {
+    "SensoryAI_IdleOnNoEnemies",
+    "SensoryAI_CombatOnEnemies",
+    "SensoryAI_FlagIdle",
+    "SensoryAI_SightSystem",
+    "SensoryAI_ResumeAnimOnLand",
+    "NoFriendlyFire",
+    
+}
+
+
 

@@ -2,7 +2,7 @@ gs_aimodule = gs_aimodule or {}
 gs_aimodule.Factions =  gs_aimodule.Factions or {}
 
 local Factions = gs_aimodule.Factions 
-
+local gs_aimodule = gs_aimodule
 
 
 -- Format: ["FACTION_NAME"] = Disposition (D_LI, D_HT, D_NU)
@@ -83,7 +83,7 @@ Factions.FACTION_SHADOW = {
 Faction: Meaty's Army
 Lore: An ancient, russian urban legend that made his appearances in the early days of GMod. He's described as a fleshy, monstrous
 figure with the desire to haunt every player's nightmares. With the rise of a new conflict, he seeks to build a powerful, flesh
-army out of anything that's a player—whether it's a gmodder or a mingebag. 
+army out of anything that's a playerâ€”whether it's a gmodder or a mingebag. 
 */
 
 Factions.FACTION_MEATY = {

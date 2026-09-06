@@ -93,5 +93,3 @@ function SWEP:GSWEP_ReloadSecondary() end
 
 
 
-
-

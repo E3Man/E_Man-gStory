@@ -15,7 +15,7 @@ SWEP.ReloadTime = 2
 SWEP.Primary.Automatic = true 
 SWEP.Secondary.Automatic = false
 
-SWEP.Primary.CanShoot = false
+SWEP.Primary.CanShoot = true
 SWEP.Secondary.CanShoot = false 
 
 SWEP.MaxClip1Size = 45
@@ -28,6 +28,10 @@ SWEP.HoldType = "magic"
 
 SWEP.PrimaryCooldown = 2
 SWEP.SecondaryCooldown = 0.2 
+
+SWEP.PrimaryShoots = false
+SWEP.PrimaryWastesAmmo = false 
+
 
 SWEP.Primary.BulletConfig = {
     Damage      = 4,
@@ -127,8 +131,6 @@ function SWEP:GSWEP_ReloadPrimary()
 end 
 
 function SWEP:GSWEP_ReloadSecondary() end 
-
-
 
 
 

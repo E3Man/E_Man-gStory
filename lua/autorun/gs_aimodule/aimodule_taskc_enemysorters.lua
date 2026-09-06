@@ -12,4 +12,3 @@ function EnemySorters.Distance(self, ent1, ent2)
 
     return dot1 < dot2 
 end 
-
